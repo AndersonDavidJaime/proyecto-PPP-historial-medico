@@ -321,21 +321,25 @@ class Frame(tk.Frame):
     def buscarCondicion(self):
         if len(self.svBuscarDni.get()) > 0 or len(self.svBuscarApellido.get()) > 0:
             where = "WHERE 1=1"
-            if (len(self.svBuscarDni.get())) > 0:
-                where = "WHERE cedula = " + self.svBuscarDni.get() + "" 
-            if (len(self.svBuscarApellido.get())) > 0:
-                where = "WHERE apellidos LIKE '" + self.svBuscarApellido.get()+"%' AND activo = 1"
+            if len(self.svBuscarDni.get()) > 0:
+                try:
+                    cedula = int(self.svBuscarDni.get())  
+                    where += f" AND cedula = {cedula}"  
+                except ValueError:
+                    messagebox.showerror("Error", "La cédula debe ser un número entero.")
+                    return
+            if len(self.svBuscarApellido.get()) > 0:
+                apellido = self.svBuscarApellido.get()
+                where += f" AND apellidos LIKE '{apellido}%' AND activo = 1"  # Agregamos la condición de búsqueda por apellido
             self.tablaPaciente(where)
         else:
             self.tablaPaciente()
-    
+
     def limpiarBuscador(self):
         self.svBuscarApellido.set('')
         self.svBuscarDni.set('')
         self.tablaPaciente()
 
-
-    
     def guardarPaciente(self):
         persona = Persona(
             self.svFecha.get(), self.svNombre.get(), self.svApellidos.get(), self.svFechaNacimiento.get(), self.svCedula.get(), self.svEdad.get(), 
@@ -347,13 +351,9 @@ class Frame(tk.Frame):
             guardarDatosPaciente(persona)
         else:
             editarDatoPaciente(persona, self.idPersona)
-            
+          
         self.deshabilitar()
         self.tablaPaciente()
-        
-
-
-
 
     def habilitar(self):
         self.svCarrera.set('')
@@ -438,7 +438,7 @@ class Frame(tk.Frame):
         else:
             self.listaPersona = listar()
         
-        self.tabla = ttk.Treeview(self, column=('Fecha_registro','Nombres', 'Apellidos', 'Cédula', 'fecha_nacimiento',
+        self.tabla = ttk.Treeview(self, column=('Fecha_registro','Nombres', 'Apellidos', 'fecha_nacimiento', 'Cédula', 
                                                 'edad','estado_civil','Domicilio','telefono','app', 'apf','ago','alergias',
                                                 'correo','Carrera', 'Género', 'Semestre'))
         self.tabla.grid(column=1, row=18, columnspan=8, sticky='nsew')
@@ -453,8 +453,8 @@ class Frame(tk.Frame):
         self.tabla.heading('Fecha_registro', text='Fecha_registro')
         self.tabla.heading('Nombres', text='Nombres')
         self.tabla.heading('Apellidos', text='Apellidos')
-        self.tabla.heading('Cédula', text='Cédula')
         self.tabla.heading('fecha_nacimiento', text='fecha_nacimiento')
+        self.tabla.heading('Cédula', text='Cédula')
         self.tabla.heading('edad', text='edad')
         self.tabla.heading('estado_civil', text='estado_civil')
         self.tabla.heading('Domicilio', text='Domicilio')
@@ -472,8 +472,8 @@ class Frame(tk.Frame):
         self.tabla.column("Fecha_registro", anchor=W, width=20)
         self.tabla.column("Nombres", anchor=W, width=20)
         self.tabla.column("Apellidos", anchor=W, width=20)
-        self.tabla.column("Cédula", anchor=W, width=20)
         self.tabla.column("fecha_nacimiento", anchor=W, width=20)
+        self.tabla.column("Cédula", anchor=W, width=20)
         self.tabla.column("edad", anchor=W, width=20)
         self.tabla.column("estado_civil", anchor=W, width=20)
         self.tabla.column("Domicilio", anchor=W, width=20)
@@ -489,7 +489,7 @@ class Frame(tk.Frame):
 
         # Insertar datos en la tabla
         for p in self.listaPersona:
-            self.tabla.insert('', 0, text=p[0], values=(p[1],p[2], p[3], p[5],p[4],p[6],p[7],p[8],p[9],p[10],p[11],p[12],p[13], p[14],p[15], p[16], p[17]), tags=('evenrow',))
+            self.tabla.insert('', 0, text=p[0], values=(p[1],p[2], p[3], p[4],p[5],p[6],p[7],p[8],p[9],p[10],p[11],p[12],p[13], p[14],p[15], p[16], p[17]), tags=('evenrow',))
 
         # Configurar el tamaño de la fila para que la tabla ocupe la mitad del espacio disponible
         self.grid_rowconfigure(18, weight=1)

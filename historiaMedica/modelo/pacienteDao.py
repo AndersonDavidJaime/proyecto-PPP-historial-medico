@@ -4,7 +4,7 @@ import sqlite3
 
 def editarDatoPaciente(persona, idPersona):
     conexion = ConexionDB()
-    sql = f"""UPDATE Persona SET fechaRegistro ='{persona.fechaRegistro}', nombres = '{persona.nombres}', apellidos = '{persona.apellidos}', cedula ='{persona.cedula}', fechaNacimiento ='{persona.fechaNacimiento}', edad = '{persona.edad}', estadoCivil = '{persona.estadoCivil}', domicilio = '{persona.domicilio}', telefono = '{persona.telefono}', appp = '{persona.appp}', apf = '{persona.apf}', ago = '{persona.ago}', alergias = '{persona.alergias}', correo = '{persona.correo}', carrera = '{persona.carrera}', genero ='{persona.genero}', semestre ='{persona.semestre}', activo = 1 WHERE idPersona = {idPersona}"""
+    sql = f"""UPDATE Persona SET fechaRegistro ='{persona.fechaRegistro}', nombres = '{persona.nombres}', apellidos = '{persona.apellidos}', fechaNacimiento ='{persona.fechaNacimiento}', cedula ='{persona.cedula}', edad = '{persona.edad}', estadoCivil = '{persona.estadoCivil}', domicilio = '{persona.domicilio}', telefono = '{persona.telefono}', appp = '{persona.appp}', apf = '{persona.apf}', ago = '{persona.ago}', alergias = '{persona.alergias}', correo = '{persona.correo}', carrera = '{persona.carrera}', genero ='{persona.genero}', semestre ='{persona.semestre}', activo = 1 WHERE idPersona = {idPersona}"""
     try:
         conexion.cursor.execute(sql)
         conexion.cerrarConexion()
@@ -84,14 +84,14 @@ def eliminarPaciente(idPersona):
 
 
 class Persona:
-    def __init__(self, fechaRegistro, nombres, apellidos, cedula, fechaNacimiento, edad, estadoCivil, 
+    def __init__(self, fechaRegistro, nombres, apellidos, fechaNacimiento, cedula, edad, estadoCivil, 
                  domicilio, telefono, appp, apf, ago, alergias, correo, carrera, genero, semestre):
         self.fechaRegistro = fechaRegistro
         self.idPersona = None
         self.nombres = nombres
         self.apellidos = apellidos
-        self.cedula = cedula
         self.fechaNacimiento = fechaNacimiento
+        self.cedula = cedula
         self.edad = edad
         self.estadoCivil = estadoCivil
         self.domicilio = domicilio
@@ -106,5 +106,5 @@ class Persona:
         self.semestre = semestre
     
     def __str__(self):
-        return f'Persona[{self.fechaRegistro} ,{self.nombres}, {self.apellidos}, {self.cedula}, {self.fechaNacimiento}, {self.edad}, {self.estadoCivil}, {self.domicilio}, {self.telefono}, {self.appp}, {self.apf}, {self.ago}, {self.alergias}, {self.correo}, {self.carrera}, {self.genero}, {self.semestre}]'
+        return f'Persona[{self.fechaRegistro} ,{self.nombres}, {self.apellidos}, {self.fechaNacimiento}, {self.cedula}, {self.edad}, {self.estadoCivil}, {self.domicilio}, {self.telefono}, {self.appp}, {self.apf}, {self.ago}, {self.alergias}, {self.correo}, {self.carrera}, {self.genero}, {self.semestre}]'
 

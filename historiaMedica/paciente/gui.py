@@ -85,15 +85,16 @@ class Frame(tk.Frame):
         self.lblApellidos = tk.Label(self, text='APELLIDOS: ')
         self.lblApellidos.config(font=('Nexa', 8, 'bold'), bg='#1B7505', fg='white')
         self.lblApellidos.grid(column=1,row=4, padx=90, pady=5, sticky='w')
+    
+    #Fecha de nacimiento
+        self.lblFechNacimiento = tk.Label(self, text='FECHA NACIMIENTO: ')
+        self.lblFechNacimiento.config(font=('Nexa', 8, 'bold'), bg='#1B7505', fg='white')
+        self.lblFechNacimiento.grid(column=1,row=6, padx=90, pady=5, sticky='w')
     #CEDULA
         self.lblCedula = tk.Label(self, text='No. CÉDULA: ')
         self.lblCedula.config(font=('Nexa', 8, 'bold'), bg='#1B7505', fg='white')
-        self.lblCedula.grid(column=1,row=6, padx=90, pady=5, sticky='w')
+        self.lblCedula.grid(column=1,row=5, padx=90, pady=5, sticky='w')
 
-    #Fecha de nacimiento
-        self.lblDni = tk.Label(self, text='FECHA NACIMIENTO: ')
-        self.lblDni.config(font=('Nexa', 8, 'bold'), bg='#1B7505', fg='white')
-        self.lblDni.grid(column=1,row=5, padx=90, pady=5, sticky='w')
 
     #edad 
         self.lblEdad = tk.Label(self, text='EDAD: ')
@@ -194,17 +195,17 @@ class Frame(tk.Frame):
         self.entryApellidos.config(width=35, font=('Nexa',8,'bold'))
         self.entryApellidos.grid(column=2, row=4, columnspan=3, sticky='w')
 
-        #FECHA de nacimiento
-        self.svFechaNacimiento = tk.StringVar()
-        self.entryFechaNacimiento = tk.Entry(self, textvariable=self.svFechaNacimiento)
-        self.entryFechaNacimiento.config(width=35, font=('Nexa',8,'bold'))
-        self.entryFechaNacimiento.grid(column=2, row=5, columnspan=3, sticky='w')
         
         #CEDULA 
         self.svCedula = tk.StringVar()
         self.entryCedula = tk.Entry(self, textvariable=self.svCedula)
         self.entryCedula.config(width=35, font=('Nexa',8,'bold'))
-        self.entryCedula.grid(column=2, row=6,  columnspan=3, sticky='w')
+        self.entryCedula.grid(column=2, row=5,  columnspan=3, sticky='w')
+        #FECHA de nacimiento
+        self.svFechaNacimiento = tk.StringVar()
+        self.entryFechaNacimiento = tk.Entry(self, textvariable=self.svFechaNacimiento)
+        self.entryFechaNacimiento.config(width=35, font=('Nexa',8,'bold'))
+        self.entryFechaNacimiento.grid(column=2, row=6, columnspan=3, sticky='w')
 
 
         #edad
@@ -322,18 +323,17 @@ class Frame(tk.Frame):
         if len(self.svBuscarDni.get()) > 0 or len(self.svBuscarApellido.get()) > 0:
             where = "WHERE 1=1"
             if len(self.svBuscarDni.get()) > 0:
-                try:
-                    cedula = int(self.svBuscarDni.get())  
-                    where += f" AND cedula = {cedula}"  
-                except ValueError:
-                    messagebox.showerror("Error", "La cédula debe ser un número entero.")
-                    return
+                # Agrega la condición para buscar por cédula
+                where += f" AND cedula = {self.svBuscarDni.get()}"
             if len(self.svBuscarApellido.get()) > 0:
-                apellido = self.svBuscarApellido.get()
-                where += f" AND apellidos LIKE '{apellido}%' AND activo = 1"  # Agregamos la condición de búsqueda por apellido
+                # Agrega la condición para buscar por apellido
+                where += f" AND apellidos LIKE '{self.svBuscarApellido.get()}%' AND activo = 1"
             self.tablaPaciente(where)
         else:
             self.tablaPaciente()
+
+
+
 
     def limpiarBuscador(self):
         self.svBuscarApellido.set('')
@@ -430,6 +430,7 @@ class Frame(tk.Frame):
 
         self.btnGuardar.config(state='disabled')
         self.btnCancelar.config(state='disabled')
+    
 
     def tablaPaciente(self, where=""):
 
@@ -442,6 +443,7 @@ class Frame(tk.Frame):
                                                 'edad','estado_civil','Domicilio','telefono','app', 'apf','ago','alergias',
                                                 'correo','Carrera', 'Género', 'Semestre'))
         self.tabla.grid(column=1, row=18, columnspan=8, sticky='nsew')
+        self.tabla.bind('<<TreeviewSelect>>', self.on_select_paciente)
 
         self.scroll = ttk.Scrollbar(self, orient='vertical', command=self.tabla.yview)
         self.scroll.grid(row=18, column=5, sticky='nse')
@@ -453,8 +455,8 @@ class Frame(tk.Frame):
         self.tabla.heading('Fecha_registro', text='Fecha_registro')
         self.tabla.heading('Nombres', text='Nombres')
         self.tabla.heading('Apellidos', text='Apellidos')
-        self.tabla.heading('fecha_nacimiento', text='fecha_nacimiento')
         self.tabla.heading('Cédula', text='Cédula')
+        self.tabla.heading('fecha_nacimiento', text='fecha_nacimiento')
         self.tabla.heading('edad', text='edad')
         self.tabla.heading('estado_civil', text='estado_civil')
         self.tabla.heading('Domicilio', text='Domicilio')
@@ -472,8 +474,8 @@ class Frame(tk.Frame):
         self.tabla.column("Fecha_registro", anchor=W, width=20)
         self.tabla.column("Nombres", anchor=W, width=20)
         self.tabla.column("Apellidos", anchor=W, width=20)
-        self.tabla.column("fecha_nacimiento", anchor=W, width=20)
         self.tabla.column("Cédula", anchor=W, width=20)
+        self.tabla.column("fecha_nacimiento", anchor=W, width=20)
         self.tabla.column("edad", anchor=W, width=20)
         self.tabla.column("estado_civil", anchor=W, width=20)
         self.tabla.column("Domicilio", anchor=W, width=20)
@@ -489,7 +491,7 @@ class Frame(tk.Frame):
 
         # Insertar datos en la tabla
         for p in self.listaPersona:
-            self.tabla.insert('', 0, text=p[0], values=(p[1],p[2], p[3], p[4],p[5],p[6],p[7],p[8],p[9],p[10],p[11],p[12],p[13], p[14],p[15], p[16], p[17]), tags=('evenrow',))
+            self.tabla.insert('', 0, text=p[0], values=(p[1],p[2], p[3], p[5],p[4],p[6],p[7],p[8],p[9],p[10],p[11],p[12],p[13], p[14],p[15], p[16], p[17]), tags=('evenrow',))
 
         # Configurar el tamaño de la fila para que la tabla ocupe la mitad del espacio disponible
         self.grid_rowconfigure(18, weight=1)
@@ -583,9 +585,13 @@ class Frame(tk.Frame):
             messagebox.showerror(title, mensaje)
 
     def salirTop(self):
+        if hasattr(self, 'topAHistoria'):
+            self.topAHistoria.destroy()
         self.topHistoriaMedica.destroy()
-        self.topAHistoria.destroy()
         self.idPersona = None
+        
+    def on_select_paciente(self, event):
+        self.idPersona = self.tabla.item(self.tabla.selection())['text']
 
     def topAgregarHistoria(self):
         self.topAHistoria = Toplevel()
@@ -1054,8 +1060,8 @@ class Frame(tk.Frame):
             self.fechaRegistroPaciente= self.tabla.item(self.tabla.selection())['values'][0]
             self.NombresPaciente = self.tabla.item(self.tabla.selection())['values'][1]
             self.ApellidosPaciente = self.tabla.item(self.tabla.selection())['values'][2]
-            self.CedulaPaciente = self.tabla.item(self.tabla.selection())['values'][3]
-            self.fechaNacimientoPaciente = self.tabla.item(self.tabla.selection())['values'][4]
+            self.CedulaPaciente = self.tabla.item(self.tabla.selection())['values'][4]
+            self.fechaNacimientoPaciente = self.tabla.item(self.tabla.selection())['values'][3]
             self.EdadPaciente = self.tabla.item(self.tabla.selection())['values'][5]
             self.EstadoCivilPaciente = self.tabla.item(self.tabla.selection())['values'][6]
             self.DomicilioPaciente = self.tabla.item(self.tabla.selection())['values'][7]

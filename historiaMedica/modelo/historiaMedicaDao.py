@@ -23,8 +23,12 @@ def listarHistoria(idPersona):
 
 #ya esta 
 def guardarHistoria(idPersona, fechaHistoria, PA, FC, PESO, talla, IMC, motivo, examenAuxiliar, detalle):
+    if idPersona is None:
+        print("Error: idPersona cannot be None")
+        return
+
     conexion = ConexionDB()
-    sql = f"""INSERT INTO historiaMedic (idPersona, fechaHistoria, PA, FC, PESO, talla, IMC, motivo, examenAuxiliar, detalle) VALUES 
+    sql = f"""INSERT INTO historiaMedic (idPersona, fechaHistoria, PA, FC, PESO, talla, IMC, motivo, examenAuxiliar, detalle) VALUES
             ({idPersona},'{fechaHistoria}','{PA}','{FC}','{PESO}','{talla}','{IMC}','{motivo}','{examenAuxiliar}','{detalle}')"""
     try:
         conexion.cursor.execute(sql)

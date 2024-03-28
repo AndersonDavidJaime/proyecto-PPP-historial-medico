@@ -848,17 +848,19 @@ class Frame(tk.Frame):
 
     def agregaHistorialMedico(self):
         try:
+            # Obtener el ID del paciente seleccionado en la tabla
+            self.idPersona = self.tabla.item(self.tabla.selection())['text']
+
             if self.idHistoriaMedica == None:
                 self.update_svExamenAuxiliar(None)  # Llama a la función para actualizar el examen auxiliar
                 self.update_svDetalle(None)
-                guardarHistoria(self.idPersonaHistoria, self.svFechaHistoria.get(), self.svMotivoConsulta.get(), self.svPA.get(), self.svFC.get(), self.svPESO.get(), self.svTalla.get(), self.svICM.get(), self.svExamenAuxiliar.get(), self.svDetalle.get())
+                guardarHistoria(self.idPersona, self.svFechaHistoria.get(), self.svMotivoConsulta.get(), self.svPA.get(), self.svFC.get(), self.svPESO.get(), self.svTalla.get(), self.svICM.get(), self.svExamenAuxiliar.get(), self.svDetalle.get())
             self.topAHistoria.destroy()
             self.topHistoriaMedica.destroy()
-            self.idPersona = None     
+            self.idPersona = None
         except Exception as e:
-            print("Error:", e)  
-            messagebox.showerror("Error", "Error al agregar historia médica")    
-    
+            print("Error:", e)
+            messagebox.showerror("Error", "Error al agregar historia médica")
 
     
     def topEditarHistorialMedico(self):

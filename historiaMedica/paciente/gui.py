@@ -30,13 +30,12 @@ class Frame(tk.Frame):
         self.fill_current_date()
         self.deshabilitar()
         self.tablaPaciente()
-        self.abrirVentanaReceta()
 
     
     def create_encabezado(self):
         # Encabezado
-        universidad_label = tk.Label(self, text='UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO\n'
-                                               'UNIDAD DE BIENESTAR UNIVERSITARIO SERVICIO MÉDICO',
+        universidad_label = tk.Label(self, text='Unidad\n'
+                                               'SERVICIO MÉDICO',
                                     font=('Nexa', 12, 'bold'), bg='#1B7505', fg='white')
         universidad_label.grid(row=0, column=1, columnspan=3,  sticky='n', padx=(10, 0))
         
@@ -275,6 +274,9 @@ class Frame(tk.Frame):
         self.lblBuscarApellido.config(font=('Nexa', 8, 'bold'), bg='#1B7505', fg='white')
         self.lblBuscarApellido.grid(column=3, row=3, sticky='w')
 
+        self.lblBuscarCarrera = tk.Label(self, text='CARRERA: ')
+        self.lblBuscarCarrera.config(font=('Nexa', 8, 'bold'), bg='#1B7505', fg='white')
+        self.lblBuscarCarrera.grid(column=3, row=4, sticky='w')
         #ENTRYS BUSCADOR
         self.svBuscarDni = tk.StringVar()
         self.entryBuscarDni = tk.Entry(self, textvariable=self.svBuscarDni)
@@ -286,22 +288,27 @@ class Frame(tk.Frame):
         self.entryBuscarApellido.config(width=25, font=('Nexa',8,'bold'))
         self.entryBuscarApellido.grid(column=3, row=3, padx=150, pady=5, columnspan=3, sticky='w')
         
+        self.svBuscarCarrera = tk.StringVar()
+        self.entryBuscarCarrera = tk.Entry(self, textvariable=self.svBuscarCarrera)
+        self.entryBuscarCarrera.config(width=25, font=('Nexa',8,'bold'))
+        self.entryBuscarCarrera.grid(column=3, row=4, padx=150, pady=5, columnspan=3, sticky='w')
+        
         # BUTTON BUSCADOR
         self.btnBuscarCondicion = tk.Button(self, text='BUSCAR', command=self.buscarCondicion)
         self.btnBuscarCondicion.config(width=17, font=('Nexa',8,'bold'), fg='#DAD5D6', 
                                 bg='#00396F', cursor='hand2',activebackground='#5B8DBD')
-        self.btnBuscarCondicion.grid(column=3, row=4,sticky='w')
+        self.btnBuscarCondicion.grid(column=3, row=5,sticky='w')
 
         self.btnLimpiarBuscador = tk.Button(self, text='LIMPIAR', command= self.limpiarBuscador)
         self.btnLimpiarBuscador.config(width=18, font=('Nexa',8,'bold'), fg='#DAD5D6', 
                                 bg='#00396F', cursor='hand2',activebackground='#5B8DBD')
-        self.btnLimpiarBuscador.grid(column=3, row=4, padx=40, pady=4, columnspan=3)  
+        self.btnLimpiarBuscador.grid(column=3, row=5, padx=40, pady=4, columnspan=3)  
 
         # FECHA - CALENDARIO 
         self.btnCalendario = tk.Button(self, text='CALENDARIO', command=self.show_calendar)
         self.btnCalendario.config(width=17, font=('Nexa',8,'bold'), fg='#DAD5D6', 
                                 bg='#120061', cursor='hand2',activebackground='#7C6DC1')
-        self.btnCalendario.grid(column=3, row=5, sticky='w')
+        self.btnCalendario.grid(column=3, row=6, sticky='w')
 
    #BUTTONS
         self.btnNuevo = tk.Button(self, text='Nuevo', command=self.habilitar)
@@ -320,7 +327,7 @@ class Frame(tk.Frame):
         self.btnCancelar.grid(column=3,row=17, pady=5)
     
     def buscarCondicion(self):
-        if len(self.svBuscarDni.get()) > 0 or len(self.svBuscarApellido.get()) > 0:
+        if len(self.svBuscarDni.get()) > 0 or len(self.svBuscarApellido.get()) > 0 or len(self.svBuscarCarrera.get()) > 0:
             where = "WHERE 1=1"
             if len(self.svBuscarDni.get()) > 0:
                 # Agrega la condición para buscar por cédula
@@ -328,6 +335,9 @@ class Frame(tk.Frame):
             if len(self.svBuscarApellido.get()) > 0:
                 # Agrega la condición para buscar por apellido
                 where += f" AND apellidos LIKE '{self.svBuscarApellido.get()}%' AND activo = 1"
+            if len(self.svBuscarCarrera.get()) > 0:
+                # Agrega la condición para buscar por carrera
+                where += f" AND carrera LIKE '{self.svBuscarCarrera.get()}%'"
             self.tablaPaciente(where)
         else:
             self.tablaPaciente()
@@ -335,9 +345,11 @@ class Frame(tk.Frame):
 
 
 
+
     def limpiarBuscador(self):
         self.svBuscarApellido.set('')
         self.svBuscarDni.set('')
+        self.svBuscarCarrera.set('')
         self.tablaPaciente()
 
     def guardarPaciente(self):
@@ -595,6 +607,7 @@ class Frame(tk.Frame):
 
     def topAgregarHistoria(self):
         self.topAHistoria = Toplevel()
+        
         self.topAHistoria.title('AGREGAR HISTORIA')
         self.topAHistoria.resizable(0, 0)
         self.topAHistoria.config(bg='#CDD8FF')
@@ -682,8 +695,9 @@ class Frame(tk.Frame):
     # Tratamiento y Botón Generar Receta
         self.lblTratamiento = tk.Label(self.frameDatosHistoria, text='TRATAMIENTO', font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
         self.lblTratamiento.grid(row=10, column=0, columnspan=2, pady=3, sticky='nsew')
-        
-        self.btnGenerarReceta = tk.Button(self.frameDatosHistoria, text='GENERAR RECETA', command=self.abrirVentanaReceta)
+ 
+ #revisa acaaaa       
+        self.btnGenerarReceta = tk.Button(self.frameDatosHistoria, text='RECETA', command=self.abrirVentanaReceta)
         self.btnGenerarReceta.config(width=20, font=('ARIAL', 12, 'bold'), fg='#DAD5D6', bg='#000992', cursor='hand2', activebackground='#4E56C6')
         self.btnGenerarReceta.grid(row=11, column=0, columnspan=2, pady=5, sticky='nsew')
 
@@ -715,16 +729,17 @@ class Frame(tk.Frame):
         
         self.idPersona = None
 
+
+
 #rectaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     def abrirVentanaReceta(self):
-        ventana_receta = tk.Toplevel()
-        ventana_receta.title("Receta Médica")
-        ventana_receta.geometry("800x600")
-        ventana_receta.config(bg='#CDD8FF')
-        ventana_receta.resizable(False, False)
-
+        self.ventana_receta = Toplevel()
+        self.ventana_receta.title("Receta Médica")
+        self.ventana_receta.geometry("800x600")
+        self.ventana_receta.config(bg='#CDD8FF')
+      
         # Frame de receta
-        frame_receta = tk.Frame(ventana_receta, bg='#CDD8FF')
+        frame_receta = tk.Frame(self.ventana_receta, bg='#CDD8FF')
         frame_receta.pack(fill="both", expand="yes", padx=20, pady=10)
 
         # Título
@@ -734,6 +749,7 @@ class Frame(tk.Frame):
         # Datos del paciente (supongo que estos campos deberían llenarse)
         paciente_frame = tk.Frame(frame_receta, bg='#CDD8FF')
         paciente_frame.pack(pady=10, padx=10, fill='x')
+        
         tk.Label(paciente_frame, text="DATOS DEL PACIENTE", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=0, columnspan=2, sticky='w')
         tk.Label(paciente_frame, text="NOMBRES PACIENTE", font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=0, sticky='w')
         self.nombres_paciente_entry = tk.Entry(paciente_frame, width=30)

@@ -81,8 +81,6 @@ def eliminarPaciente(idPersona):
         messagebox.showwarning(title, mensaje)
 
 
-
-
 class Persona:
     def __init__(self, fechaRegistro, nombres, apellidos, fechaNacimiento, cedula, edad, estadoCivil, 
                  domicilio, telefono, appp, apf, ago, alergias, correo, carrera, genero, semestre):

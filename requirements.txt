@@ -1,0 +1,16 @@
+astroid==3.0.2
+autopep8==2.0.4
+Babel==2.14.0
+colorama==0.4.6
+defusedxml==0.7.1
+dill==0.3.7
+fonttools==4.49.0
+fpdf2==2.7.8
+isort==5.13.2
+mccabe==0.7.0
+pillow==10.2.0
+platformdirs==4.1.0
+pycodestyle==2.11.1
+pylint==3.0.3
+tkcalendar==1.6.1
+tomlkit==0.12.3

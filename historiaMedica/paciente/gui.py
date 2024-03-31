@@ -2,12 +2,13 @@ import tkinter as tk
 from fpdf import FPDF
 import sys
 import subprocess
-
+from modelo.recetaDao import guardarReceta
 from tkinter import *
 from tkinter import Button, ttk, scrolledtext, Toplevel, LabelFrame
 from tkinter import messagebox
 from modelo.pacienteDao import Persona, eliminarPaciente, guardarDatosPaciente, listar, listarCondicion, editarDatoPaciente
 from modelo.historiaMedicaDao import guardarHistoria, listarHistoria, eliminarHistoria, editarHistoria
+
 import tkcalendar as tc
 from tkcalendar import *
 from tkcalendar import Calendar
@@ -25,6 +26,7 @@ class Frame(tk.Frame):
         self.idPersonaHistoria =None
         self.idHistoriaMedica =None
         self.idHistoriaMedicaEditar =None
+        self.idPERSONAPERS=None
         self.camposPaciente()
         self.create_encabezado()
         self.fill_current_date()
@@ -342,8 +344,9 @@ class Frame(tk.Frame):
         else:
             self.tablaPaciente()
 
-
-
+    #remplazar con las entradas
+    def guardarrecetadef(self):
+        guardarReceta(89,'12/12/2023','NA','NA','NA','NA','NA','NA','NA','NA','NA','NA')
 
 
     def limpiarBuscador(self):
@@ -604,6 +607,8 @@ class Frame(tk.Frame):
         
     def on_select_paciente(self, event):
         self.idPersona = self.tabla.item(self.tabla.selection())['text']
+        self.idPERSONAPERS=self.tabla.item(self.tabla.selection())['text']
+        print("paciente seleccionado",self.tabla.item(self.tabla.selection())['values'])
 
     def topAgregarHistoria(self):
         self.topAHistoria = Toplevel()
@@ -737,7 +742,18 @@ class Frame(tk.Frame):
         self.ventana_receta.title("Receta Médica")
         self.ventana_receta.geometry("800x600")
         self.ventana_receta.config(bg='#CDD8FF')
-      
+        print(self.idPERSONAPERS)
+        print("esteeeee es el id de persona")
+        personabusqueda=listarCondicion('where idPersona={id}'.format(id=self.idPERSONAPERS))
+        personabusqueda=personabusqueda[0]
+        print(personabusqueda)
+        print(personabusqueda[2])
+
+        nombres_paciente='{primernombre} {segundonombre}'.format(primernombre=personabusqueda[2],segundonombre=personabusqueda[3])
+        cedula=personabusqueda[5]
+        n_historia=1000
+        edad=personabusqueda[6]
+        sexo=personabusqueda[16]
         # Frame de receta
         frame_receta = tk.Frame(self.ventana_receta, bg='#CDD8FF')
         frame_receta.pack(fill="both", expand="yes", padx=20, pady=10)
@@ -752,22 +768,39 @@ class Frame(tk.Frame):
         
         tk.Label(paciente_frame, text="DATOS DEL PACIENTE", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=0, columnspan=2, sticky='w')
         tk.Label(paciente_frame, text="NOMBRES PACIENTE", font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=0, sticky='w')
-        self.nombres_paciente_entry = tk.Entry(paciente_frame, width=30)
+        
+        textEntry = tk.StringVar()
+        textEntry.set(nombres_paciente)
+        self.nombres_paciente_entry = tk.Entry(paciente_frame, width=30,textvariable=textEntry)
         self.nombres_paciente_entry.grid(row=1, column=1, sticky='w')
+     
+
         tk.Label(paciente_frame, text="CEDULA", font=('Arial', 12), bg='#CDD8FF').grid(row=2, column=0, sticky='w')
-        self.cedula_entry = tk.Entry(paciente_frame, width=30)
+        
+        textEntry = tk.StringVar()
+        textEntry.set(cedula)
+        self.cedula_entry = tk.Entry(paciente_frame, width=30,textvariable=textEntry)
         self.cedula_entry.grid(row=2, column=1, sticky='w')
         tk.Label(paciente_frame, text="Nª HISTORIA", font=('Arial', 12), bg='#CDD8FF').grid(row=3, column=0, sticky='w')
-        self.historia_medica_entry = tk.Entry(paciente_frame, width=30)
+        
+        textEntry = tk.StringVar()
+        textEntry.set(n_historia)
+        self.historia_medica_entry = tk.Entry(paciente_frame, width=30,textvariable=textEntry)
         self.historia_medica_entry.grid(row=3, column=1, sticky='w')
         tk.Label(paciente_frame, text="EDAD", font=('Arial', 12), bg='#CDD8FF').grid(row=4, column=0, sticky='w')
-        self.edad_entry = tk.Entry(paciente_frame, width=10)
+        
+        textEntry = tk.StringVar()
+        textEntry.set(edad)
+        self.edad_entry = tk.Entry(paciente_frame, width=10,textvariable=textEntry)
         self.edad_entry.grid(row=4, column=1, sticky='w')
         tk.Label(paciente_frame, text="MESES", font=('Arial', 12), bg='#CDD8FF').grid(row=4, column=2, sticky='w')
         self.meses_entry = tk.Entry(paciente_frame, width=10)
         self.meses_entry.grid(row=4, column=3, sticky='w')
         tk.Label(paciente_frame, text="SEXO", font=('Arial', 12), bg='#CDD8FF').grid(row=4, column=4, sticky='w')
-        self.sexo_entry = tk.Entry(paciente_frame, width=10)
+        
+        textEntry = tk.StringVar()
+        textEntry.set(sexo)
+        self.sexo_entry = tk.Entry(paciente_frame, width=10,textvariable=textEntry)
         self.sexo_entry.grid(row=4, column=5, sticky='w')
 
         # Formulario de medicamentos
@@ -794,7 +827,7 @@ class Frame(tk.Frame):
         # Botones
         btn_frame = tk.Frame(frame_receta, bg='#CDD8FF')
         btn_frame.pack(pady=20)
-        tk.Button(btn_frame, text="Guardar", font=('Arial', 12)).grid(row=0, column=0, padx=10)
+        tk.Button(btn_frame, text="Guardar", font=('Arial', 12),command=self.guardarrecetadef).grid(row=0, column=0, padx=10)
         tk.Button(btn_frame, text="Imprimir", font=('Arial', 12), command=self.generar_pdf).grid(row=0, column=1, padx=10)
         tk.Button(btn_frame, text="Cancelar", font=('Arial', 12)).grid(row=0, column=2, padx=10)
 
@@ -838,7 +871,7 @@ class Frame(tk.Frame):
             pdf.cell(200, 10, txt=f"Cantidad: {cantidad}", ln=True, align='L')
 
         # Guardar el PDF
-        pdf_file = "receta_medica.pdf"
+        pdf_file = "receta_medica_{}.pdf".format(datetime.now()).replace(" ","-").replace(":",".")
         pdf.output(pdf_file)
 
         # Abrir el PDF
@@ -1154,7 +1187,7 @@ class Frame(tk.Frame):
     def calcularEdad(self, *args):
         self.fechaActual = date.today()
         self.date1 = self.cal.get_date()
-        self.conver = datetime.strptime(self.date1, "%m/%d/%y")  # Ajuste del formato
+        self.conver = datetime.strptime(self.date1, "%d/%m/%y")  # Ajuste del formato
         
         self.resul = self.fechaActual.year - self.conver.year
         self.resul -= ((self.fechaActual.month, self.fechaActual.day) < (self.conver.month, self.conver.day))

@@ -6,6 +6,7 @@ import subprocess
 from tkinter import *
 from tkinter import Button, ttk, scrolledtext, Toplevel, LabelFrame
 from tkinter import messagebox
+from modelo.recetaDao import guardarReceta
 from modelo.pacienteDao import Persona, eliminarPaciente, guardarDatosPaciente, listar, listarCondicion, editarDatoPaciente
 from modelo.historiaMedicaDao import guardarHistoria, listarHistoria, eliminarHistoria, editarHistoria
 import tkcalendar as tc
@@ -13,6 +14,7 @@ from tkcalendar import *
 from tkcalendar import Calendar
 from datetime import datetime, date
 from tkinter import ttk, Toplevel
+
 
 
 
@@ -26,6 +28,8 @@ class Frame(tk.Frame):
         self.idPersonaHistoria =None
         self.idHistoriaMedica =None
         self.idHistoriaMedicaEditar =None
+        self.idPERSONAPERS=None
+        self.idHistoria=None
         self.camposPaciente()
         self.create_encabezado()
         self.fill_current_date()
@@ -75,7 +79,6 @@ class Frame(tk.Frame):
         self.lblGenero = tk.Label(self, text='GÉNERO: ')
         self.lblGenero.config(font=('Nexa', 8, 'bold'), bg='#1B7505', fg='white')
         self.lblGenero.grid(column=1, row=2, padx=90, pady=5, sticky='w')
-
 
     #NOMBRE
         self.lblNombres = tk.Label(self, text='NOMBRES: ')
@@ -533,6 +536,9 @@ class Frame(tk.Frame):
             if self.idPersona == None:
                 self.idPersona = self.tabla.item(self.tabla.selection())['text']
                 self.idPersonaHistoria = self.tabla.item(self.tabla.selection())['text']
+                #aquiii
+                self.idHistoria=self.tabla.item(self.tabla.selection())['text']
+
             if (self.idPersona > 0):
                 idPersona = self.idPersona
             
@@ -606,6 +612,8 @@ class Frame(tk.Frame):
         
     def on_select_paciente(self, event):
         self.idPersona = self.tabla.item(self.tabla.selection())['text']
+        self.idPERSONAPERS=self.tabla.item(self.tabla.selection())['text']
+
 
     def topAgregarHistoria(self):
         self.topAHistoria = Toplevel()
@@ -722,6 +730,7 @@ class Frame(tk.Frame):
         self.btnSalirAgregarHistoria.grid(row=2, column=3, padx=10, pady=5)
         
         self.idPersona = None
+    
 
 
     
@@ -729,8 +738,18 @@ class Frame(tk.Frame):
     def abrirVentanaReceta(self):
         self.ventana_receta = tk.Toplevel()
         self.ventana_receta.title("Receta Médica")
-        self.ventana_receta.geometry("800x600")
+        self.ventana_receta.geometry("925x710")
         self.ventana_receta.config(bg='#CDD8FF')
+        personabusqueda=listarCondicion('where idPersona={id}'.format(id=self.idPERSONAPERS))
+        personabusqueda=personabusqueda[0]
+        
+
+        nombres_paciente='{primernombre} {segundonombre}'.format(primernombre=personabusqueda[2],segundonombre=personabusqueda[3])
+        cedula=personabusqueda[4]
+        n_historia=1000
+        edad=personabusqueda[6]
+        sexo=personabusqueda[16]
+
 
         # Frame de receta
         frame_receta = tk.Frame(self.ventana_receta, bg='#CDD8FF')
@@ -756,101 +775,158 @@ class Frame(tk.Frame):
         # Nombre del Paciente
         nombre_label = tk.Label(frame_receta, text="Nombre del Paciente:", font=('Arial', 12), bg='#CDD8FF')
         nombre_label.grid(row=3, column=0, sticky='w')
-        self.nombre_entry = tk.Entry(frame_receta, width=30)
-        self.nombre_entry.grid(row=3, column=1, sticky='w')
+        
+        textEntry = tk.StringVar()
+        textEntry.set(nombres_paciente)
+        
+        self.nombres_paciente_entry = tk.Entry(frame_receta, width=30,textvariable=textEntry)
+        self.nombres_paciente_entry.grid(row=3, column=1, sticky='w')
+     
+    
 
         # Cédula
         cedula_label = tk.Label(frame_receta, text="Cédula:", font=('Arial', 12), bg='#CDD8FF')
         cedula_label.grid(row=4, column=0, sticky='w')
-        self.cedula_entry = tk.Entry(frame_receta, width=30)
+
+        textEntry = tk.StringVar()
+        textEntry.set(cedula)
+        self.cedula_entry = tk.Entry(frame_receta, width=30,textvariable=textEntry)
         self.cedula_entry.grid(row=4, column=1, sticky='w')
+        
 
         # Edad
         edad_label = tk.Label(frame_receta, text="Edad:", font=('Arial', 12), bg='#CDD8FF')
         edad_label.grid(row=5, column=0, sticky='w')
-        self.edad_entry = tk.Entry(frame_receta, width=30)
+
+        textEntry = tk.StringVar()
+        textEntry.set(edad)
+        self.edad_entry = tk.Entry(frame_receta, width=30,textvariable=textEntry)
         self.edad_entry.grid(row=5, column=1, sticky='w')
+        
+    
+        # Sexo
+        sexo_label = tk.Label(frame_receta, text="Sexo:", font=('Arial', 12), bg='#CDD8FF')
+        sexo_label.grid(row=6, column=0, sticky='w')
+        
+        textEntry = tk.StringVar()
+        textEntry.set(sexo)
+        self.sexo_entry = tk.Entry(frame_receta, width=30,textvariable=textEntry)
+        self.sexo_entry.grid(row=6, column=1, sticky='w')
+
+
 
         # Número de Receta
         n_receta_label = tk.Label(frame_receta, text="Nº Receta:", font=('Arial', 12), bg='#CDD8FF')
-        n_receta_label.grid(row=6, column=0, sticky='w')
+        n_receta_label.grid(row=7, column=0, sticky='w')
         self.n_receta_entry = tk.Entry(frame_receta, width=30)
-        self.n_receta_entry.grid(row=6, column=1, sticky='w')
+        self.n_receta_entry.grid(row=7, column=1, sticky='w')
 
         # Número de Historia Médica
         historia_medica_label = tk.Label(frame_receta, text="Nº Historia Médica:", font=('Arial', 12), bg='#CDD8FF')
-        historia_medica_label.grid(row=7, column=0, sticky='w')
+        historia_medica_label.grid(row=8, column=0, sticky='w')
         self.historia_medica_entry = tk.Entry(frame_receta, width=30)
-        self.historia_medica_entry.grid(row=7, column=1, sticky='w')
+        self.historia_medica_entry.grid(row=8, column=1, sticky='w')
+        
 
-        # Sexo
-        sexo_label = tk.Label(frame_receta, text="Sexo:", font=('Arial', 12), bg='#CDD8FF')
-        sexo_label.grid(row=8, column=0, sticky='w')
-        self.sexo_entry = tk.Entry(frame_receta, width=30)
-        self.sexo_entry.grid(row=8, column=1, sticky='w')
+
+        # Agregar datos del prescriptor
+        datos_prescriptor_label = tk.Label(frame_receta, text="DATOS PRESCRIPTOR", font=('Arial', 14, 'bold'), bg='#CDD8FF')
+        datos_prescriptor_label.grid(row=9, column=0, columnspan=4, pady=10)
+
+        self.datos_prescriptor_entry = tk.Text(frame_receta, width=105, height=2)
+        self.datos_prescriptor_entry.grid(row=10, column=0, columnspan=4, sticky='n', padx=5, pady=5)
 
         # Lista de medicamentos
         medicamento_frame = tk.Frame(frame_receta, bg='#CDD8FF')
-        medicamento_frame.grid(row=9, column=0, columnspan=4, pady=10, padx=10, sticky='w')
-        tk.Label(medicamento_frame, text="MEDICAMENTOS", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=0, columnspan=2, sticky='w')
-        
-         # Lista de medicamentos agregados
+        medicamento_frame.grid(row=11, column=0, columnspan=4, pady=10, padx=10, sticky='w')
+        tk.Label(medicamento_frame, text="MEDICAMENTOS", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=0, columnspan=2, sticky='n')
+
+        # Lista de medicamentos agregados
         medicamentos_agregados_frame = tk.Frame(frame_receta, bg='#CDD8FF')
-        medicamentos_agregados_frame.grid(row=9, column=2, columnspan=2, rowspan=4, padx=10, pady=10, sticky='nsew')
-        tk.Label(medicamentos_agregados_frame, text="Medicamentos Agregados", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=0, columnspan=2, sticky='w')
+        medicamentos_agregados_frame.grid(row=11, column=2, columnspan=2, rowspan=4, padx=10, pady=10, sticky='nse')
+        tk.Label(medicamentos_agregados_frame, text="Medicamentos Agregados", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=0, sticky='n')
+        tk.Label(medicamentos_agregados_frame, text="Cantidad", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=1, sticky='nse')
+
         self.medicamentos_agregados_text = tk.Text(medicamentos_agregados_frame, width=40, height=10)
-        self.medicamentos_agregados_text.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        self.medicamentos_agregados_text.grid(row=1, column=0, sticky='nse')
+
+        # Caja de texto para mostrar las cantidades agregadas
+        self.cantidades_agregadas_text = tk.Text(medicamentos_agregados_frame, width=10, height=10)
+        self.cantidades_agregadas_text.grid(row=1, column=1, sticky='nse')
 
         # Columna de medicamentos
-        tk.Label(medicamento_frame, text="Medicamento", font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=0, sticky='w')
-        self.medicamento_entry = tk.Entry(medicamento_frame, width=30)
+        tk.Label(medicamento_frame, text="Medicamento", font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=0, sticky='n')
+        self.medicamento_entry = tk.Entry(medicamento_frame, width=40)
         self.medicamento_entry.grid(row=2, column=0, sticky='w')
 
         # Columna de cantidades
-        tk.Label(medicamento_frame, text="Cantidad", font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=1, sticky='w')
-        self.cantidad_entry = tk.Entry(medicamento_frame, width=10)
-        self.cantidad_entry.grid(row=2, column=1, sticky='w')
-
-        # Columna de medicamentos
-        tk.Label(medicamento_frame, text="Medicamento", font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=0, sticky='w')
-        self.medicamento_entry = tk.Entry(medicamento_frame, width=30)
-        self.medicamento_entry.grid(row=2, column=0, sticky='w')
-
-        # Columna de cantidades
-        tk.Label(medicamento_frame, text="Cantidad", font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=1, sticky='w')
-        self.cantidad_entry = tk.Entry(medicamento_frame, width=10)
+        tk.Label(medicamento_frame, text="Cantidad", font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=1, sticky='n')
+        self.cantidad_entry = tk.Entry(medicamento_frame, width=20)
         self.cantidad_entry.grid(row=2, column=1, sticky='w')
 
         # Tabla de medicamentos
         datos_med_frame = tk.Frame(frame_receta, bg='#CDD8FF')
-        datos_med_frame.grid(row=10, column=0, columnspan=4, pady=10, padx=10, sticky='w')
-        tk.Label(datos_med_frame, text="DATOS DE MEDICAMENTO", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=0, sticky='w')
+        datos_med_frame.grid(row=12, column=0, columnspan=4, pady=10, padx=10, sticky='w')
+        tk.Label(datos_med_frame, text="DATOS DE MEDICAMENTO", font=('Arial', 14, 'bold'), bg='#CDD8FF').grid(row=0, column=3, sticky='w', columnspan=6)
 
         # Nombres de las columnas de la tabla
-        columnas = ["Via de Administración", "Dosis", "Frecuencia", "Duración", "Mañana", "Mediodía", "Tarde", "Noche"]
+        columnas = ["Medicamento","Via de \nAdministración", "Dosis", "Frecuencia", "Duración", "Mañana", "Mediodía", "Tarde", "Noche"]
         for i, col in enumerate(columnas):
-            tk.Label(datos_med_frame, text=col, font=('Arial', 12), bg='#CDD8FF').grid(row=1, column=i, sticky='w')
+            tk.Label(datos_med_frame, text=col, font=('Arial', 10), bg='#CDD8FF', width=10).grid(row=1, column=i, padx=2, pady=2, sticky='w')
 
         # Crear la tabla
         self.filas_tabla = []
-        for i in range(3):  # Definir la cantidad de filas de la tabla
-            fila = []
-            for j in range(len(columnas)):
-                entry = tk.Entry(datos_med_frame, width=10)
-                entry.grid(row=i + 2, column=j, padx=5, pady=5, sticky='w')
-                fila.append(entry)
-            self.filas_tabla.append(fila)
 
-        # Botones
+        self.medicamento_entry2 = tk.Text(datos_med_frame, width=11, height=7)
+        self.medicamento_entry2.grid(row=2, column=0, padx=0, pady=2, sticky='w')
+
+        via_admin_entry = tk.Text(datos_med_frame, width=11, height=7)
+        via_admin_entry.grid(row=2, column=1, padx=2, pady=2, sticky='w')
+        self.filas_tabla.append([via_admin_entry])
+
+        dosis_entry = tk.Text(datos_med_frame, width=11, height=7)
+        dosis_entry.grid(row=2, column=2, padx=2, pady=2, sticky='w')
+        self.filas_tabla[-1].append(dosis_entry)
+
+        frecuencia_entry = tk.Text(datos_med_frame, width=11, height=7, )
+        frecuencia_entry.grid(row=2, column=3, padx=2, pady=2, sticky='w')
+        self.filas_tabla[-1].append(frecuencia_entry)
+
+        duracion_entry = tk.Text(datos_med_frame, width=11, height=7)
+        duracion_entry.grid(row=2, column=4, padx=2, pady=2, sticky='w')
+        self.filas_tabla[-1].append(duracion_entry)
+
+        manana_entry = tk.Text(datos_med_frame, width=11, height=7)
+        manana_entry.grid(row=2, column=5, padx=2, pady=2, sticky='w')
+        self.filas_tabla[-1].append(manana_entry)
+
+        mediodia_entry = tk.Text(datos_med_frame, width=11, height=7)
+        mediodia_entry.grid(row=2, column=6, padx=2, pady=2, sticky='w')
+        self.filas_tabla[-1].append(mediodia_entry)
+
+        tarde_entry = tk.Text(datos_med_frame, width=11, height=7)
+        tarde_entry.grid(row=2, column=7, padx=2, pady=2, sticky='w')
+        self.filas_tabla[-1].append(tarde_entry)
+
+        noche_entry = tk.Text(datos_med_frame, width=11, height=7)
+        noche_entry.grid(row=2, column=8, padx=2, pady=2, sticky='w')
+        self.filas_tabla[-1].append(noche_entry)
+
         btn_frame = tk.Frame(frame_receta, bg='#CDD8FF')
-        btn_frame.grid(row=11, column=0, columnspan=4, pady=20)
-        tk.Button(btn_frame, text="Guardar", font=('Arial', 12)).grid(row=0, column=0, padx=10)
+        btn_frame.grid(row=13, column=0, columnspan=4, pady=20)
+        tk.Button(btn_frame, text="Guardar", font=('Arial', 12), command=self.guardarrecetadef).grid(row=0, column=0, padx=10)
         tk.Button(btn_frame, text="Imprimir", font=('Arial', 12), command=self.generar_pdf).grid(row=0, column=1, padx=10)
-        tk.Button(btn_frame, text="Cancelar", font=('Arial', 12)).grid(row=0, column=2, padx=10)
+        tk.Button(btn_frame, text="Cancelar", font=('Arial', 12), command=self.cerrar_ventana_receta).grid(row=0, column=2, padx=10)
         tk.Button(btn_frame, text="Agregar", font=('Arial', 12), command=self.agregar_medicamento).grid(row=0, column=3, padx=10)
 
         # Lista para almacenar medicamentos y cantidades
         self.medicamentos_list = []
+
+        self.ventana_receta.mainloop()
+    
+    def cerrar_ventana_receta(self):
+        self.ventana_receta.destroy()
+
     def fill_current_date2(self):
         current_date = datetime.now().strftime("%Y-%m-%d")
         self.fecha_entry.insert(tk.END, current_date)
@@ -860,8 +936,12 @@ class Frame(tk.Frame):
         cantidad = self.cantidad_entry.get()
 
         if medicamento and cantidad:
-            # Agregar medicamento y cantidad a la lista de medicamentos agregados
-            self.medicamentos_agregados_text.insert(tk.END, f"{medicamento} - Cantidad: {cantidad}\n")
+            # Agregar medicamento y cantidad a las cajas de texto correspondientes
+            self.medicamentos_agregados_text.insert(tk.END, f"{medicamento}\n")
+            self.cantidades_agregadas_text.insert(tk.END, f"{cantidad}\n")
+            
+            # Agregar medicamento también al campo medicamento_entry2
+            self.medicamento_entry2.insert(tk.END, f"{medicamento}\n")
 
             # Agregar medicamento y cantidad a la lista
             self.medicamentos_list.append((medicamento, cantidad))
@@ -873,16 +953,21 @@ class Frame(tk.Frame):
             messagebox.showerror("Error", "Por favor ingrese el nombre del medicamento y la cantidad.")
 
     def generar_pdf(self):
-        nombres_paciente = self.nombre_entry.get()
+        # Obtener datos del paciente y la receta
+        nombres_paciente = self.nombres_paciente_entry.get()
         cedula = self.cedula_entry.get()
         historia_medica = self.historia_medica_entry.get()
         n_receta = self.n_receta_entry.get()
         sexo = self.sexo_entry.get()
         servicio_especialidad = self.servicio_entry.get()
         fecha = self.fecha_entry.get()
+        edad = self.edad_entry.get()
+
+        datos_prescriptor = self.datos_prescriptor_entry.get("1.0", tk.END)
+
 
         # Obtener datos de medicamentos y cantidades de la lista
-        medicamentos = [f"Medicamento: {med}, Cantidad: {cant}" for med, cant in self.medicamentos_list]
+        medicamentos = [(med, cant) for med, cant in self.medicamentos_list]
 
         if not medicamentos:
             messagebox.showerror("Error", "Por favor agregue al menos un medicamento para generar la receta.")
@@ -892,24 +977,72 @@ class Frame(tk.Frame):
         pdf.add_page()
         pdf.set_font("Arial", size=12)
 
-        pdf.cell(200, 10, txt="Receta Médica", ln=True, align='C')
+        pdf.cell(200, 10, txt="RECETA PARA ATENCION AMBULATORIA", ln=True, align='C')
 
-        pdf.cell(200, 10, txt="DATOS DEL PACIENTE", ln=True, align='L')
+        # Imprimir datos del paciente y la receta
+        pdf.cell(200, 10, txt="DATOS DEL PACIENTE", ln=True, align='C')
         pdf.cell(200, 10, txt=f"Nombres: {nombres_paciente}", ln=True, align='L')
         pdf.cell(200, 10, txt=f"Cédula: {cedula}", ln=True, align='L')
+        pdf.cell(200, 10, txt=f"Sexo: {sexo}", ln=True, align='L')
+        pdf.cell(200, 10, txt=f"Edad: {edad}", ln=True, align='L')
+
+        pdf.cell(200, 10, txt="DATOS DE LA RECETA", ln=True, align='C')
         pdf.cell(200, 10, txt=f"Nª Historia Médica: {historia_medica}", ln=True, align='L')
         pdf.cell(200, 10, txt=f"Nª Receta: {n_receta}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Sexo: {sexo}", ln=True, align='L')
         pdf.cell(200, 10, txt=f"Servicio/Especialidad: {servicio_especialidad}", ln=True, align='L')
         pdf.cell(200, 10, txt=f"Fecha: {fecha}", ln=True, align='L')
 
-        pdf.cell(200, 10, txt="MEDICAMENTOS", ln=True, align='L')
-        for med in medicamentos:
-            pdf.cell(100, 10, txt=med, ln=True, align='L')
+        pdf.cell(200, 10, txt="DATOS DEL PRESCRIPTOR", ln=True, align='C')
+        pdf.cell(200, 10, txt=f"Nombre: {datos_prescriptor}", ln=True, align='L')
 
-        pdf_file = "receta_medica.pdf"
+        pdf.cell(200, 10, txt="MEDICAMENTOS", ln=True, align='C')
+
+        # Imprimir encabezados de la tabla de medicamentos
+      # Imprimir encabezados de la tabla de medicamentos
+        encabezados_medicamentos = ["Via de Administración", "Dosis", "Frecuencia", "Duración", "Mañana", "Mediodía", "Tarde", "Noche"]
+        pdf.set_font("Arial", size=7)  # Ajustar tamaño de fuente
+
+        # Imprimir encabezados como fila
+        for encabezado in encabezados_medicamentos:
+            pdf.cell(24, 10, txt=encabezado, border=1, align='C')  # Ajustar ancho de celda
+        pdf.ln()
+
+        # Imprimir datos de la tabla de medicamentos
+        pdf.set_font("Arial", size=7)  # Ajustar tamaño de fuente
+        for i in range(len(self.filas_tabla)):
+            fila = self.filas_tabla[i]
+            max_length = max(len(entry.get("1.0", tk.END).strip().split(',')) for entry in fila)
+            for j in range(max_length):
+                for entry in fila:
+                    medicamento_text = entry.get("1.0", tk.END).strip()  # Obtener texto del entry y eliminar espacios en blanco
+                    partes_medicamento = medicamento_text.split(",")  # Dividir el texto en partes separadas por coma
+                    
+                    if len(partes_medicamento) > j:
+                        pdf.cell(24, 10, txt=partes_medicamento[j].strip(), border=1, align='C')  # Ajustar ancho de celda
+                    else:
+                        pdf.cell(24, 10, txt="", border=1, align='C')  # Ajustar ancho de celda con celda vacía
+                pdf.ln()  # Agregar salto de línea para imprimir la próxima fila
+
+        # Imprimir encabezados de la tabla de medicamentos agregados
+        pdf.cell(200, 10, txt="MEDICAMENTOS AGREGADOS", ln=True, align='L')
+        encabezados_agregados = ["Medicamento", "Cantidad"]
+        for encabezado in encabezados_agregados:
+            pdf.set_font("Arial", size=8)  # Ajustar tamaño de fuente
+            pdf.cell(40, 10, txt=encabezado, border=1, align='C')  # Ajustar ancho de celda
+        pdf.ln()
+
+        # Imprimir datos de la tabla de medicamentos agregados
+        for med, cant in self.medicamentos_list:
+            pdf.set_font("Arial", size=8)  # Ajustar tamaño de fuente
+            pdf.cell(40, 10, txt=med, border=1, align='L')  # Ajustar ancho de celda para medicamento
+            pdf.cell(40, 10, txt=cant, border=1, align='C')  # Ajustar ancho de celda para cantidad
+            pdf.ln()
+
+
+        pdf_file = "receta_medica_{}.pdf".format(datetime.now()).replace(" ","-").replace(":",".")
         pdf.output(pdf_file)
 
+        # Abrir el archivo PDF automáticamente según el sistema operativo
         if sys.platform.startswith('linux'):
             subprocess.Popen(["xdg-open", pdf_file])
         elif sys.platform.startswith('win32'):
@@ -921,7 +1054,38 @@ class Frame(tk.Frame):
         else:
             print("No se pudo abrir el archivo PDF automáticamente.")
 
-    
+
+        
+    def guardarrecetadef(self):
+        # Obtener los valores ingresados en los campos de entrada y cajas de texto
+        fecha_receta = self.fecha_entry.get()
+        servicio_especialidad = self.servicio_entry.get()
+        prescriptor_nombre = self.datos_prescriptor_entry.get("1.0", tk.END).strip()
+
+        # Obtener los datos de los medicamentos ingresados en la tabla
+        vias_administracion = self.obtener_datos_columna(0)
+        dosis = self.obtener_datos_columna(1)
+        frecuencia = self.obtener_datos_columna(2)
+        duracion = self.obtener_datos_columna(3)
+        manana = self.obtener_datos_columna(4)
+        mediodia = self.obtener_datos_columna(5)
+        tarde = self.obtener_datos_columna(6)
+        noche = self.obtener_datos_columna(7)
+
+        # Aquí deberías obtener el resto de los datos de la receta de acuerdo a cómo se ingresan en la interfaz
+        n_historia_medica = self.historia_medica_entry.get()
+
+        # Llamar a la función guardarReceta con los valores obtenidos
+        guardarReceta(n_historia_medica, fecha_receta, servicio_especialidad, prescriptor_nombre, vias_administracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche)
+
+    def obtener_datos_columna(self, indice_columna):
+        datos_columna = []
+        for fila in self.filas_tabla:
+            entry_text = fila[indice_columna].get("1.0", tk.END).strip()
+            datos = entry_text.split(",")
+            datos_columna.extend(datos)
+        return ",".join(datos_columna)
+
 #hasta aca recetaaaaaaaaaaaaaaaaaaaaa
 
     

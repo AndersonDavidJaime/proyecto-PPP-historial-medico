@@ -16,10 +16,11 @@ def listarRecetas(idHistoriaMedica):
         messagebox.showerror(title, mensaje)
     return listaRecetas
 
-def guardarReceta(idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, meidodia, tarde, noche):
+def guardarReceta(idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche):
     conexion = ConexionDB()
-    sql = f"""INSERT INTO Receta (idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, meidodia, tarde, noche) 
-            VALUES ({idHistoriaMedica}, '{fechaReceta}', '{especialidadServicio}', '{prescriptorNombre}', '{viasAdministracion}', '{dosis}', '{frecuencia}', '{duracion}', '{manana}', '{meidodia}', '{tarde}', '{noche}')"""
+    sql = f"""INSERT INTO Receta (idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche) 
+            VALUES ({idHistoriaMedica}, '{fechaReceta}', '{especialidadServicio}', '{prescriptorNombre}', '{viasAdministracion}', '{dosis}', '{frecuencia}', '{duracion}', '{manana}', '{mediodia}', '{tarde}', '{noche}')"""
+    print(sql)
     try:
         conexion.cursor.execute(sql)
         conexion.cerrarConexion()

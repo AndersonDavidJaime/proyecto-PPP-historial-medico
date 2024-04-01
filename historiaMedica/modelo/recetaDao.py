@@ -1,20 +1,20 @@
 from tkinter import messagebox
 from .conexion import ConexionDB
 
-def listarRecetas(idHistoriaMedica):
+def listarReceta(idHistoriaMedica):
     conexion = ConexionDB()
-    listaRecetas = []
-    sql = f"SELECT * FROM Receta WHERE idHistoriaMedica = {idHistoriaMedica}"
-    
+    listaReceta = []
+    sql = f'SELECT idReceta, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche FROM Receta WHERE idHistoriaMedica = {idHistoriaMedica}'
+
     try:
         conexion.cursor.execute(sql)
-        listaRecetas = conexion.cursor.fetchall()
+        listaReceta = conexion.cursor.fetchall()
         conexion.cerrarConexion()
     except:
-        title = 'Listar Recetas'
-        mensaje = 'Error al listar las recetas'
+        title = 'LISTAR RECETA'
+        mensaje = 'Error al listar receta'
         messagebox.showerror(title, mensaje)
-    return listaRecetas
+    return listaReceta
 
 def guardarReceta(idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche):
     conexion = ConexionDB()

@@ -6,7 +6,7 @@ import subprocess
 from tkinter import *
 from tkinter import Button, ttk, scrolledtext, Toplevel, LabelFrame
 from tkinter import messagebox
-from modelo.recetaDao import guardarReceta
+from modelo.recetaDao import guardarReceta, listarReceta
 from modelo.pacienteDao import Persona, eliminarPaciente, guardarDatosPaciente, listar, listarCondicion, editarDatoPaciente
 from modelo.historiaMedicaDao import guardarHistoria, listarHistoria, eliminarHistoria, editarHistoria
 import tkcalendar as tc
@@ -530,14 +530,19 @@ class Frame(tk.Frame):
         self.btnSalir.config(width=20,font=('ARIAL',12,'bold'), fg='#DAD5D6', bg='#000000', activebackground='#5E5E5E', cursor='hand2')
         self.btnSalir.grid(row=20, column=4, padx=10, pady=5)
 
+
+#agg aqui
+    
+        #hasta aca
 #desde aqui la tabla
+        
+    
     def historiaMedica(self):
         try:
             if self.idPersona == None:
                 self.idPersona = self.tabla.item(self.tabla.selection())['text']
                 self.idPersonaHistoria = self.tabla.item(self.tabla.selection())['text']
                 #aquiii
-                self.idHistoria=self.tabla.item(self.tabla.selection())['text']
 
             if (self.idPersona > 0):
                 idPersona = self.idPersona
@@ -732,8 +737,6 @@ class Frame(tk.Frame):
         self.idPersona = None
     
 
-
-    
 #rectaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     def abrirVentanaReceta(self):
         self.ventana_receta = tk.Toplevel()
@@ -1054,7 +1057,6 @@ class Frame(tk.Frame):
         else:
             print("No se pudo abrir el archivo PDF automáticamente.")
 
-
         
     def guardarrecetadef(self):
         # Obtener los valores ingresados en los campos de entrada y cajas de texto
@@ -1072,11 +1074,12 @@ class Frame(tk.Frame):
         tarde = self.obtener_datos_columna(6)
         noche = self.obtener_datos_columna(7)
 
-        # Aquí deberías obtener el resto de los datos de la receta de acuerdo a cómo se ingresan en la interfaz
-        n_historia_medica = self.historia_medica_entry.get()
-
         # Llamar a la función guardarReceta con los valores obtenidos
-        guardarReceta(n_historia_medica, fecha_receta, servicio_especialidad, prescriptor_nombre, vias_administracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche)
+        guardarReceta(self.idHistoriaMedica, fecha_receta, servicio_especialidad, prescriptor_nombre, vias_administracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche)
+        
+        # Llamar al método para mostrar las recetas actualizadas
+        self.mostrarRecetas(self.idHistoriaMedica)
+
 
     def obtener_datos_columna(self, indice_columna):
         datos_columna = []
@@ -1085,7 +1088,61 @@ class Frame(tk.Frame):
             datos = entry_text.split(",")
             datos_columna.extend(datos)
         return ",".join(datos_columna)
+    
+    def mostrarRecetasSeleccionada(self):
+        try:
+            # Obtener el ID de la historia médica seleccionada en la tabla
+            self.idHistoriaMedica = self.tablaHistoria.item(self.tablaHistoria.selection())['text']
+            # Mostrar la tabla de recetas correspondiente
+            self.mostrarRecetas(self.idHistoriaMedica)
+        except Exception as e:
+            title = 'Mostrar Recetas'
+            mensaje = 'Error al mostrar las recetas'
+            messagebox.showerror(title, mensaje)
 
+
+    def mostrarRecetas(self, idHistoriaMedica):
+        self.topRecetas = Toplevel()
+        self.topRecetas.title('RECETAS')
+        self.topRecetas.resizable(0,0)
+        self.topRecetas.config(bg='#CDD8FF')
+
+        self.listaRecetas = listarReceta(idHistoriaMedica)
+        self.tablaRecetas = ttk.Treeview(self.topRecetas, column=('Fecha Receta', 'Especialidad', 'Prescriptor', 'Vías de administración', 'Dosis', 'Frecuencia', 'Duración', 'Horarios'))
+        self.tablaRecetas.grid(row=0, column=0, columnspan=11, sticky='nse')
+
+        self.scrollRecetas = ttk.Scrollbar(self.topRecetas, orient='vertical', command=self.tablaRecetas.yview)
+        self.scrollRecetas.grid(row=0, column=12, sticky='nse')
+
+        self.tablaRecetas.configure(yscrollcommand=self.scrollRecetas.set)
+        self.tablaRecetas.heading('#0', text='ID')
+        self.tablaRecetas.heading('#1', text='Fecha Receta')
+        self.tablaRecetas.heading('#2', text='Especialidad')
+        self.tablaRecetas.heading('#3', text='Prescriptor')
+        self.tablaRecetas.heading('#4', text='Vías de administración')
+        self.tablaRecetas.heading('#5', text='Dosis')
+        self.tablaRecetas.heading('#6', text='Frecuencia')
+        self.tablaRecetas.heading('#7', text='Duración')
+        self.tablaRecetas.heading('#8', text='Horarios')
+
+        self.tablaRecetas.column('#0', anchor=W, width=50)
+        self.tablaRecetas.column('#1', anchor=W, width=100)
+        self.tablaRecetas.column('#2', anchor=W, width=100)
+        self.tablaRecetas.column('#3', anchor=W, width=100)
+        self.tablaRecetas.column('#4', anchor=W, width=100)
+        self.tablaRecetas.column('#5', anchor=W, width=100)
+        self.tablaRecetas.column('#6', anchor=W, width=100)
+        self.tablaRecetas.column('#7', anchor=W, width=100)
+        self.tablaRecetas.column('#8', anchor=W, width=100)
+
+        for p in self.listaRecetas:
+            self.tablaRecetas.insert('',0, text=p[0], values=(p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8]))
+        
+        self.btnAgregarReceta = tk.Button(self.topRecetas, text='Agregar Receta', command=self.abrirVentanaReceta)
+        self.btnAgregarReceta.config(width=20, font=('ARIAL', 12, 'bold'), fg='#DAD5D6', bg='#002771', cursor='hand2', activebackground='#7198E0')
+        self.btnAgregarReceta.grid(row=2, column=0, padx=10, pady=5)
+        
+       
 #hasta aca recetaaaaaaaaaaaaaaaaaaaaa
 
     
@@ -1110,8 +1167,7 @@ class Frame(tk.Frame):
         except Exception as e:
             print("Error:", e)
             messagebox.showerror("Error", "Error al agregar historia médica")
-
-    
+            
     def topEditarHistorialMedico(self):
         try:
             self.idHistoriaMedica = self.tablaHistoria.item(self.tablaHistoria.selection())['text']
@@ -1124,20 +1180,14 @@ class Frame(tk.Frame):
             self.MotivoEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][2]
             self.ExamenAuxiliarEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][8]
             self.DetalleEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][9]
-
             self.topEditarHistoria = Toplevel()
             self.topEditarHistoria.title('EDITAR HISTORIA MEDICA')
             self.topEditarHistoria.resizable(0,0)
             self.topEditarHistoria.config(bg='#CDD8FF')
-
             #FRAME 1 EDITAR DATOS HISTORIA
             self.frameEditarHistoria = tk.LabelFrame(self.topEditarHistoria)
             self.frameEditarHistoria.config(bg='#CDD8FF')
-            self.frameEditarHistoria.pack(fill="both", expand="yes", padx=20,pady=10)
-
-
-            #labels ______________
-            
+            self.frameEditarHistoria.pack(fill="both", expand="yes", padx=20,pady=10)          
             # Signos Vitales
             self.lblSignosVitalesEditar = tk.Label(self.frameEditarHistoria, text='SIGNOS VITALES', font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblSignosVitalesEditar.grid(row=0, column=0, columnspan=4, pady=5)
@@ -1172,59 +1222,43 @@ class Frame(tk.Frame):
              #TALLA
             self.lblTallaEditar = tk.Label(self.frameEditarHistoria, text='TALLA:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblTallaEditar.grid(row=2, column=1, pady=3, sticky='w', columnspan=2)
-
             self.svTallaEditar = tk.StringVar()
             self.entryTallaEditar = tk.Entry(self.frameEditarHistoria, width=30, textvariable=self.svTallaEditar)
             self.entryTallaEditar.config(width=30, font=('Nexa',8,'bold'))
-            self.entryTallaEditar.grid(row=2, column=1, pady=3, sticky='e')
-        
+            self.entryTallaEditar.grid(row=2, column=1, pady=3, sticky='e')    
             #IMC
             self.lblIMCEditar = tk.Label(self.frameEditarHistoria, text='IMC:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblIMCEditar.grid(row=3, column=0, pady=3, sticky='w', columnspan=2)
-
             self.svICMEditar = tk.StringVar()
             self.entryIMCEditar = tk.Entry(self.frameEditarHistoria, width=30, textvariable=self.svICMEditar)
             self.entryIMCEditar.config(width=30, font=('Nexa',8,'bold'))
             self.entryIMCEditar.grid(row=3, column=0, pady=3, sticky='e')
-
              # Motivo de Consulta
             self.lblMotivoConsultaEditar = tk.Label(self.frameEditarHistoria, text='MOTIVO DE CONSULTA:', font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblMotivoConsultaEditar.grid(row=6, column=0, columnspan=2, pady=5, sticky='nsew')
-
             self.svMotivoConsultaEditar = tk.StringVar()
             self.entryMotivoConsultaEditar = tk.Entry(self.frameEditarHistoria, width=30, textvariable=self.svMotivoConsultaEditar)
             self.entryMotivoConsultaEditar.config(width=30, font=('Nexa',8,'bold'))
             self.entryMotivoConsultaEditar.grid(row=7, column=0, columnspan=2, pady=5, sticky='nsew')
-
-
-
-
             # Notas de Evolución
             self.lblNotasEvolucionEditar = tk.Label(self.frameEditarHistoria, text='EXAMEN AUXILIAR:', font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblNotasEvolucionEditar.grid(row=8, column=0, pady=5, sticky='nsew')
-
             self.svExamenAuxiliarEditar = tk.StringVar()
             self.entryExamenAuxiliarEditar = tk.Text(self.frameEditarHistoria, width=40, height=5)
             self.entryExamenAuxiliarEditar.grid(row=9, column=0, pady=3, sticky='nsew')
-
-            # y Prescripción Médica
+           # y Prescripción Médica
             self.lblPrescripcionMedicaEditar = tk.Label(self.frameEditarHistoria, text='DETALLE:', font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblPrescripcionMedicaEditar.grid(row=8, column=1, pady=5, sticky='nsew')
-
             self.svDetalleEditar = tk.StringVar()
             self.entryDetalleEditar = tk.Text(self.frameEditarHistoria, width=40, height=5)
             self.entryDetalleEditar.grid(row=9, column=1, pady=3, sticky='nsew')
-
             # Tratamiento y Botón Generar Receta
             self.lblTratamiento = tk.Label(self.frameEditarHistoria, text='TRATAMIENTO', font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblTratamiento.grid(row=10, column=0, columnspan=2, pady=3, sticky='nsew')
-    
     #revisa acaaaa       
-            self.btnGenerarReceta = tk.Button(self.frameEditarHistoria, text='RECETA', command=self.abrirVentanaReceta)
+            self.btnGenerarReceta = tk.Button(self.frameEditarHistoria, text='RECETA', command=self.mostrarRecetasSeleccionada)
             self.btnGenerarReceta.config(width=20, font=('ARIAL', 12, 'bold'), fg='#DAD5D6', bg='#000992', cursor='hand2', activebackground='#4E56C6')
             self.btnGenerarReceta.grid(row=11, column=0, columnspan=2, pady=5, sticky='nsew')
-
-
             #FRAME FECHA EDITAR
             self.frameFechaEditar = tk.LabelFrame(self.topEditarHistoria)
             self.frameFechaEditar.config(bg='#CDD8FF')

@@ -1,6 +1,22 @@
 from tkinter import messagebox
 from .conexion import ConexionDB
 
+
+def ultimoId(idHistoriaMedica):
+    conexion = ConexionDB()
+    ultimo = 0
+    sql = f"select max(idReceta)+1 as uiltimo from Receta where idHistoriaMedica = {idHistoriaMedica}"
+    
+    try:
+        conexion.cursor.execute(sql)
+        ultimo = conexion.cursor.fetchall()
+        conexion.cerrarConexion()
+    except:
+        title = 'Listar Recetas'
+        mensaje = 'Error al listar las recetas'
+        messagebox.showerror(title, mensaje)
+    return ultimo
+
 def listarReceta(idHistoriaMedica):
     conexion = ConexionDB()
     listaReceta = []

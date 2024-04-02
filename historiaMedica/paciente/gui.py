@@ -6,7 +6,7 @@ import subprocess
 from tkinter import *
 from tkinter import Button, ttk, scrolledtext, Toplevel, LabelFrame
 from tkinter import messagebox
-from modelo.recetaDao import guardarReceta, listarReceta
+from modelo.recetaDao import guardarReceta, listarReceta, ultimoId
 from modelo.pacienteDao import Persona, eliminarPaciente, guardarDatosPaciente, listar, listarCondicion, editarDatoPaciente
 from modelo.historiaMedicaDao import guardarHistoria, listarHistoria, eliminarHistoria, editarHistoria
 import tkcalendar as tc
@@ -29,7 +29,8 @@ class Frame(tk.Frame):
         self.idHistoriaMedica =None
         self.idHistoriaMedicaEditar =None
         self.idPERSONAPERS=None
-        self.idHistoria=None
+        self.idHistoriaRec=None
+
         self.camposPaciente()
         self.create_encabezado()
         self.fill_current_date()
@@ -542,7 +543,7 @@ class Frame(tk.Frame):
             if self.idPersona == None:
                 self.idPersona = self.tabla.item(self.tabla.selection())['text']
                 self.idPersonaHistoria = self.tabla.item(self.tabla.selection())['text']
-                #aquiii
+                
 
             if (self.idPersona > 0):
                 idPersona = self.idPersona
@@ -749,9 +750,13 @@ class Frame(tk.Frame):
 
         nombres_paciente='{primernombre} {segundonombre}'.format(primernombre=personabusqueda[2],segundonombre=personabusqueda[3])
         cedula=personabusqueda[4]
-        n_historia=1000
+        n_historia=self.idHistoriaRec
         edad=personabusqueda[6]
         sexo=personabusqueda[16]
+
+        numero_receta = ultimoId(n_historia)
+        numero_receta = numero_receta[0][0]
+        print(numero_receta)
 
 
         # Frame de receta
@@ -821,14 +826,21 @@ class Frame(tk.Frame):
         # Número de Receta
         n_receta_label = tk.Label(frame_receta, text="Nº Receta:", font=('Arial', 12), bg='#CDD8FF')
         n_receta_label.grid(row=7, column=0, sticky='w')
-        self.n_receta_entry = tk.Entry(frame_receta, width=30)
-        self.n_receta_entry.grid(row=7, column=1, sticky='w')
+        
+        textEntry = tk.StringVar()
+        textEntry.set(numero_receta)
+        self.RecetaN_entry = tk.Entry(frame_receta, width=30,textvariable=textEntry)
+        self.RecetaN_entry.grid(row=7, column=1, sticky='w')
+     
 
         # Número de Historia Médica
         historia_medica_label = tk.Label(frame_receta, text="Nº Historia Médica:", font=('Arial', 12), bg='#CDD8FF')
         historia_medica_label.grid(row=8, column=0, sticky='w')
-        self.historia_medica_entry = tk.Entry(frame_receta, width=30)
-        self.historia_medica_entry.grid(row=8, column=1, sticky='w')
+        
+        textEntry = tk.StringVar()
+        textEntry.set(n_historia)
+        self.historiaN_entry = tk.Entry(frame_receta, width=30,textvariable=textEntry)
+        self.historiaN_entry.grid(row=8, column=1, sticky='w')
         
 
 
@@ -959,8 +971,8 @@ class Frame(tk.Frame):
         # Obtener datos del paciente y la receta
         nombres_paciente = self.nombres_paciente_entry.get()
         cedula = self.cedula_entry.get()
-        historia_medica = self.historia_medica_entry.get()
-        n_receta = self.n_receta_entry.get()
+        historia_medica = self.historiaN_entry.get()
+        n_receta = self.RecetaN_entry.get()
         sexo = self.sexo_entry.get()
         servicio_especialidad = self.servicio_entry.get()
         fecha = self.fecha_entry.get()
@@ -1171,6 +1183,10 @@ class Frame(tk.Frame):
     def topEditarHistorialMedico(self):
         try:
             self.idHistoriaMedica = self.tablaHistoria.item(self.tablaHistoria.selection())['text']
+            
+            self.idHistoriaRec = self.idHistoriaMedica
+            print(self.idHistoriaMedica)
+
             self.fechaHistoriaEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][1]
             self.PAEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][3]
             self.FCEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][4]

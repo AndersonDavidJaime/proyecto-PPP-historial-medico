@@ -5,7 +5,7 @@ from .conexion import ConexionDB
 def ultimoId(idHistoriaMedica):
     conexion = ConexionDB()
     ultimo = 0
-    sql = f"select max(idReceta)+1 as uiltimo from Receta where idHistoriaMedica = {idHistoriaMedica}"
+    sql = f"select max(idReceta)+1 as uiltimo from Receta"
     
     try:
         conexion.cursor.execute(sql)

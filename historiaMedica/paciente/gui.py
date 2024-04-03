@@ -14,6 +14,8 @@ from tkcalendar import *
 from tkcalendar import Calendar
 from datetime import datetime, date
 from tkinter import ttk, Toplevel
+import re
+
 
 
 
@@ -331,6 +333,8 @@ class Frame(tk.Frame):
         self.btnCancelar.config(width=20, font=('ARIAL',8,'bold'), fg='#DAD5D6', 
                                 bg='#B00000', cursor='hand2',activebackground='#D27C7C')
         self.btnCancelar.grid(column=3,row=17, pady=5)
+
+        
     
     def buscarCondicion(self):
         if len(self.svBuscarDni.get()) > 0 or len(self.svBuscarApellido.get()) > 0 or len(self.svBuscarCarrera.get()) > 0:
@@ -564,12 +568,12 @@ class Frame(tk.Frame):
             self.tablaHistoria.heading('#0', text='ID')
             self.tablaHistoria.heading('#1', text='Nombre')
             self.tablaHistoria.heading('#2', text='Fecha Historia')
-            self.tablaHistoria.heading('#3', text='Motivo')
-            self.tablaHistoria.heading('#4', text='PA')
-            self.tablaHistoria.heading('#5', text='FC')
-            self.tablaHistoria.heading('#6', text='Peso')
-            self.tablaHistoria.heading('#7', text='Talla')
-            self.tablaHistoria.heading('#8', text='IMC')
+            self.tablaHistoria.heading('#3', text='PA')
+            self.tablaHistoria.heading('#4', text='FC')
+            self.tablaHistoria.heading('#5', text='PESO')
+            self.tablaHistoria.heading('#6', text='TALLA')
+            self.tablaHistoria.heading('#7', text='IMC')
+            self.tablaHistoria.heading('#8', text='MOTIVO')
             self.tablaHistoria.heading('#9', text='Examen auxiliar')
             self.tablaHistoria.heading('#10', text='Detalle')
 
@@ -638,7 +642,7 @@ class Frame(tk.Frame):
         self.lblSignosVitales.grid(row=0, column=0, columnspan=4, pady=5)
 
         #PA
-        self.lblPA = tk.Label(self.frameDatosHistoria, text='PA:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+        self.lblPA = tk.Label(self.frameDatosHistoria, text='PA (sistolica/diastolica):', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
         self.lblPA.grid(row=1, column=0, pady=3, padx=0, sticky='w', columnspan=2)
         
         self.svPA = tk.StringVar()
@@ -647,7 +651,7 @@ class Frame(tk.Frame):
         self.entryPA.grid(row=1, column=0, pady=3,  sticky='e')
 
         #FC
-        self.lblFC = tk.Label(self.frameDatosHistoria, text='FC:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+        self.lblFC = tk.Label(self.frameDatosHistoria, text='FC (lpm):', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
         self.lblFC.grid(row=1, column=1, pady=3, sticky='w', columnspan=2)
         
         self.svFC = tk.StringVar()
@@ -656,7 +660,7 @@ class Frame(tk.Frame):
         self.entryFC.grid(row=1, column=1, pady=3, sticky='e')
 
         #PESO
-        self.lblPeso = tk.Label(self.frameDatosHistoria, text='PESO:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+        self.lblPeso = tk.Label(self.frameDatosHistoria, text='PESO (kg):', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
         self.lblPeso.grid(row=2, column=0, pady=2, sticky='w', columnspan=2)
         
         self.svPESO = tk.StringVar()
@@ -665,7 +669,7 @@ class Frame(tk.Frame):
         self.entryPeso.grid(row=2, column=0, pady=3, sticky='e')
 
         #TALLA
-        self.lblTalla = tk.Label(self.frameDatosHistoria, text='TALLA:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+        self.lblTalla = tk.Label(self.frameDatosHistoria, text='TALLA (CM):', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
         self.lblTalla.grid(row=2, column=1, pady=3, sticky='w', columnspan=2)
 
         self.svTalla = tk.StringVar()
@@ -740,6 +744,7 @@ class Frame(tk.Frame):
 
 #rectaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     def abrirVentanaReceta(self):
+        self.topRecetas.destroy()
         self.ventana_receta = tk.Toplevel()
         self.ventana_receta.title("Receta Médica")
         self.ventana_receta.geometry("925x710")
@@ -1091,7 +1096,12 @@ class Frame(tk.Frame):
         
         # Llamar al método para mostrar las recetas actualizadas
         self.mostrarRecetas(self.idHistoriaMedica)
-
+        self.ventana_receta.destroy()
+        self.topRecetas.destroy()
+        self.topEditarHistoria.destroy()
+        self.topHistoriaMedica.destroy()
+        self.topRecetas.destroy()
+        
 
     def obtener_datos_columna(self, indice_columna):
         datos_columna = []
@@ -1153,6 +1163,11 @@ class Frame(tk.Frame):
         self.btnAgregarReceta = tk.Button(self.topRecetas, text='Agregar Receta', command=self.abrirVentanaReceta)
         self.btnAgregarReceta.config(width=20, font=('ARIAL', 12, 'bold'), fg='#DAD5D6', bg='#002771', cursor='hand2', activebackground='#7198E0')
         self.btnAgregarReceta.grid(row=2, column=0, padx=10, pady=5)
+
+        self.btnSalir = tk.Button(self.topRecetas, text='Salir', command=self.topRecetas.destroy)
+        self.btnSalir.config(width=20, font=('ARIAL', 12, 'bold'), fg='#DAD5D6', bg='#002771', cursor='hand2', activebackground='#7198E0')
+        self.btnSalir.grid(row=2, column=1, padx=10, pady=5)
+
         
        
 #hasta aca recetaaaaaaaaaaaaaaaaaaaaa
@@ -1169,10 +1184,36 @@ class Frame(tk.Frame):
             # Obtener el ID del paciente seleccionado en la tabla
             self.idPersona = self.tabla.item(self.tabla.selection())['text']
 
+            # Validar el formato de PA (Presión Arterial)
+            if not re.match(r'\d{2,3}/\d{2,3}', self.svPA.get()):
+                messagebox.showerror("Error", "Formato incorrecto para la Presión Arterial (PA). Debe ser en formato 'número/número'.")
+                return
+
+            # Validar que FC (Frecuencia Cardíaca) sea un número entero
+            if not self.svFC.get().strip().isdigit():
+                messagebox.showerror("Error", "La Frecuencia Cardíaca (FC) debe ser un número entero.")
+                return
+
+            # Validar que Peso sea un número (entero o decimal)
+            if not re.match(r'\d+(\.\d+)?', self.svPESO.get().strip()):
+                messagebox.showerror("Error", "El Peso debe ser un número (entero o decimal).")
+                return
+
+            # Validar que Talla sea un número (entero o decimal)
+            if not re.match(r'\d+(\.\d+)?', self.svTalla.get().strip()):
+                messagebox.showerror("Error", "La Talla debe ser un número (entero o decimal).")
+                return
+
+            # Validar que IMC sea un número (entero o decimal)
+            if not re.match(r'\d+(\.\d+)?', self.svICM.get().strip()):
+                messagebox.showerror("Error", "El Índice de Masa Corporal (IMC) debe ser un número (entero o decimal).")
+                return
+
+            # Si los campos cumplen con los formatos requeridos, guardar la historia médica
             if self.idHistoriaMedica == None:
                 self.update_svExamenAuxiliar(None)  # Llama a la función para actualizar el examen auxiliar
                 self.update_svDetalle(None)
-                guardarHistoria(self.idPersona, self.svFechaHistoria.get(), self.svMotivoConsulta.get(), self.svPA.get(), self.svFC.get(), self.svPESO.get(), self.svTalla.get(), self.svICM.get(), self.svExamenAuxiliar.get(), self.svDetalle.get())
+                guardarHistoria(self.idPersona, self.svFechaHistoria.get(), self.svPA.get(), self.svFC.get(),  self.svPESO.get(), self.svTalla.get(), self.svICM.get(), self.svMotivoConsulta.get(),  self.svExamenAuxiliar.get(), self.svDetalle.get())
             self.topAHistoria.destroy()
             self.topHistoriaMedica.destroy()
             self.idPersona = None
@@ -1182,18 +1223,15 @@ class Frame(tk.Frame):
             
     def topEditarHistorialMedico(self):
         try:
-            self.idHistoriaMedica = self.tablaHistoria.item(self.tablaHistoria.selection())['text']
-            
+            self.idHistoriaMedica = self.tablaHistoria.item(self.tablaHistoria.selection())['text']         
             self.idHistoriaRec = self.idHistoriaMedica
-            print(self.idHistoriaMedica)
-
             self.fechaHistoriaEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][1]
-            self.PAEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][3]
-            self.FCEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][4]
-            self.PesoEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][5]
-            self.TallaEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][6]
-            self.IMCEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][7]
-            self.MotivoEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][2]
+            self.PAEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][2]
+            self.FCEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][3]
+            self.PesoEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][4]
+            self.TallaEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][5]
+            self.IMCEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][6]
+            self.MotivoEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][7]
             self.ExamenAuxiliarEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][8]
             self.DetalleEditar = self.tablaHistoria.item(self.tablaHistoria.selection())['values'][9]
             self.topEditarHistoria = Toplevel()
@@ -1268,6 +1306,8 @@ class Frame(tk.Frame):
             self.svDetalleEditar = tk.StringVar()
             self.entryDetalleEditar = tk.Text(self.frameEditarHistoria, width=40, height=5)
             self.entryDetalleEditar.grid(row=9, column=1, pady=3, sticky='nsew')
+
+            
             # Tratamiento y Botón Generar Receta
             self.lblTratamiento = tk.Label(self.frameEditarHistoria, text='TRATAMIENTO', font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblTratamiento.grid(row=10, column=0, columnspan=2, pady=3, sticky='nsew')
@@ -1291,6 +1331,9 @@ class Frame(tk.Frame):
             self.entryFechaHistoriaEditar.grid(row = 1, column=1, pady=3, padx=5)
             
             # Insertar texto en Entry widgets para editar
+            self.entryFechaHistoriaEditar.delete(0, tk.END)
+            self.entryFechaHistoriaEditar.insert(0, self.fechaHistoriaEditar)
+
             self.entryPAEditar.delete(0, tk.END)
             self.entryPAEditar.insert(0, self.PAEditar)
 
@@ -1309,11 +1352,10 @@ class Frame(tk.Frame):
             self.entryExamenAuxiliarEditar.delete("1.0", tk.END)  # Limpiar todo el contenido antes de insertar
             self.entryExamenAuxiliarEditar.insert(tk.END, self.ExamenAuxiliarEditar)
 
+            
             self.entryDetalleEditar.delete("1.0", tk.END)  # Limpiar todo el contenido antes de insertar
             self.entryDetalleEditar.insert(tk.END, self.DetalleEditar)
 
-            self.entryFechaHistoriaEditar.delete(0, tk.END)
-            self.entryFechaHistoriaEditar.insert(0, self.fechaHistoriaEditar)
 
             self.entryMotivoConsultaEditar.delete(0, tk.END)
             self.entryMotivoConsultaEditar.insert(0, self.MotivoEditar)
@@ -1331,25 +1373,57 @@ class Frame(tk.Frame):
             if self.idHistoriaMedicaEditar == None:
                 self.idHistoriaMedicaEditar = self.idHistoriaMedica
             self.idHistoriaMedica = None
-
+            
         except:
             title = 'Editar Historia'
             mensaje = 'Error al editar historia'
             messagebox.showerror(title, mensaje)
     
     
+
+
     def historiaMedicaEditar(self):
         try:
-            editarHistoria(self.svFechaHistoriaEditar.get(), self.svPAEditar.get(), self.svFCEditar.get(), self.svPESOEditar.get(), self.svTallaEditar.get(), self.svICMEditar.get(), self.svMotivoConsultaEditar.get(), self.svExamenAuxiliarEditar.get(), self.svDetalleEditar.get(), self.idHistoriaMedicaEditar)
+            # Validar el formato de PA (Presión Arterial)
+            if not re.match(r'\d{2,3}/\d{2,3}', self.svPAEditar.get()):
+                messagebox.showerror("Error", "Formato incorrecto para la Presión Arterial (PA). Debe ser en formato 'número/número'.")
+                return
+
+            # Validar que FC (Frecuencia Cardíaca) sea un número entero o decimal
+            if not re.match(r'^\d+(\,\d+)?$', self.svFCEditar.get().strip().replace('.', ',')):
+                messagebox.showerror("Error", "La Frecuencia Cardíaca (FC) debe ser un número (entero o decimal).")
+                return
+
+            # Validar que Peso sea un número (entero o decimal)
+            if not re.match(r'^\d+(\,\d+)?$', self.svPESOEditar.get().strip().replace('.', ',')):
+                messagebox.showerror("Error", "El Peso debe ser un número (entero o decimal).")
+                return
+
+            # Validar que Talla sea un número (entero o decimal)
+            if not re.match(r'^\d+(\,\d+)?$', self.svTallaEditar.get().strip().replace('.', ',')):
+                messagebox.showerror("Error", "La Talla debe ser un número (entero o decimal).")
+                return
+
+            # Validar que IMC sea un número (entero o decimal)
+            if not re.match(r'^\d+(\,\d+)?$', self.svICMEditar.get().strip().replace('.', ',')):
+                messagebox.showerror("Error", "El Índice de Masa Corporal (IMC) debe ser un número (entero o decimal).")
+                return
+
+            # Si los campos cumplen con los formatos requeridos, proceder con la edición de la historia médica
+            examen_auxiliar = self.entryExamenAuxiliarEditar.get("1.0", "end-1c").strip()
+            detalle = self.entryDetalleEditar.get("1.0", "end-1c").strip()
+            editarHistoria(self.svFechaHistoriaEditar.get(), self.svPAEditar.get(), self.svFCEditar.get(), self.svPESOEditar.get(), self.svTallaEditar.get(), self.svICMEditar.get(), self.svMotivoConsultaEditar.get(), examen_auxiliar, detalle, self.idHistoriaMedicaEditar)
             self.idHistoriaMedicaEditar = None
             self.idHistoriaMedica = None
             self.topEditarHistoria.destroy()
             self.topHistoriaMedica.destroy()
-        except:
-            title = 'Editar Historia'
-            mensaje = 'Error al editar historia'
-            messagebox.showerror(title, mensaje)
+        except Exception as e:
+            print("Error:", e)
+            messagebox.showerror("Error", "Error al editar historia médica")
             self.topEditarHistoria.destroy()
+
+
+
 
     def eliminarHistorialMedico(self):
         try:

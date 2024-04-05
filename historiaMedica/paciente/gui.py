@@ -1,7 +1,8 @@
 import tkinter as tk
-from fpdf import FPDF
+from fpdf import FPDF, TitleStyle
 import sys
 import subprocess
+from modelo.conexion import ConexionDB
 
 from tkinter import *
 from tkinter import Button, ttk, scrolledtext, Toplevel, LabelFrame
@@ -15,6 +16,18 @@ from tkcalendar import Calendar
 from datetime import datetime, date
 from tkinter import ttk, Toplevel
 import re
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import sqlite3
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Paragraph, SimpleDocTemplate, TableStyle, Spacer 
+from reportlab.lib.styles import getSampleStyleSheet
+
+
+
 
 
 
@@ -32,6 +45,8 @@ class Frame(tk.Frame):
         self.idHistoriaMedicaEditar =None
         self.idPERSONAPERS=None
         self.idHistoriaRec=None
+        self.conexion_db = ConexionDB()  # Instancia de la clase ConexionDB
+        self.pdf_process = None
 
         self.camposPaciente()
         self.create_encabezado()
@@ -39,12 +54,12 @@ class Frame(tk.Frame):
         self.deshabilitar()
         self.tablaPaciente()
         
-
+    
     
     def create_encabezado(self):
         # Encabezado
-        universidad_label = tk.Label(self, text='Unidad\n'
-                                               'SERVICIO MÉDICO',
+        universidad_label = tk.Label(self, text='UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO\n'
+                                               'UNIDAD DE BIENESTRAR UNIVERSITARIO CENTRO MÉDICO',
                                     font=('Nexa', 12, 'bold'), bg='#1B7505', fg='white')
         universidad_label.grid(row=0, column=1, columnspan=3,  sticky='n', padx=(10, 0))
         
@@ -334,8 +349,672 @@ class Frame(tk.Frame):
                                 bg='#B00000', cursor='hand2',activebackground='#D27C7C')
         self.btnCancelar.grid(column=3,row=17, pady=5)
 
+        self.btnReportes = tk.Button(self, text='Reportes', command=self.venetanaReportes)
+        self.btnReportes.config(width=20, font=('ARIAL',8,'bold'), fg='#DAD5D6', 
+                                bg='#B00000', cursor='hand2',activebackground='#D27C7C')
+        self.btnReportes.grid(column=4,row=17, pady=5)
+
+    def venetanaReportes(self):
+        topVentanaReportes = tk.Toplevel()
+        topVentanaReportes.title('REPORTES')
+        topVentanaReportes.geometry("700x700")
+         # Evitar redimensionamiento
+
+        # Marco principal para contener el título y los botones
+        marco_principal = tk.Frame(topVentanaReportes)
+        marco_principal.pack(fill="both", expand=True)
+
+        # Encabezado
+        self.lblTitulo = tk.Label(marco_principal, text="Reportes", font=("Arial", 14, "bold"))
+        self.lblTitulo.pack(pady=(10, 20))
+
+        # Botones de selección de sección
+        marco_botones = tk.Frame(marco_principal)
+        marco_botones.pack(side="top", pady=(0, 10))
+
+        self.btnHistoriaMedica = tk.Button(marco_botones, text="Historia Médica", command=self.mostrar_seccion_historia_medica, width=20, height=5)
+        self.btnHistoriaMedica.pack(side="left", padx=10, pady=10)
+
+        self.btnPacientes = tk.Button(marco_botones, text="Pacientes", command=self.mostrar_seccion_pacientes, width=20, height=5)
+        self.btnPacientes.pack(side="left", padx=10, pady=10)
+
+        self.btnRecetas = tk.Button(marco_botones, text="Recetas", command=self.mostrar_seccion_recetas, width=20, height=5)
+        self.btnRecetas.pack(side="left", padx=10, pady=10)
+
+        # Contenedor de la sección
+        self.contenedor_seccion = tk.Frame(marco_principal)
+        self.contenedor_seccion.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+
+
+    def mostrar_seccion_historia_medica(self):
+        # Limpiar el contenedor
+        for widget in self.contenedor_seccion.winfo_children():
+            widget.destroy()
+
+    def mostrar_seccion_pacientes(self):
+        # Limpiar el contenedor
+        for widget in self.contenedor_seccion.winfo_children():
+            widget.destroy()
         
+        # Crear un marco para contener los botones
+        marco_botones = tk.Frame(self.contenedor_seccion)
+        marco_botones.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Crear y mostrar los botones de la sección de pacientes
+        self.btnEdad = tk.Button(marco_botones, text="Edad", width=15, command=self.mostrar_seccion_edad)
+        self.btnEdad.pack(side="left", fill="both", expand=True, padx=5, pady=(0, 5))
+
+        btnCarrera = tk.Button(marco_botones, text="Carrera", width=15, command=self.mostrar_seccion_carrera)
+        btnCarrera.pack(side="left", fill="both", expand=True, padx=5, pady=(0, 5))
+
+        btnGenero = tk.Button(marco_botones, text="Género", width=15, command=self.mostrar_seccion_genero)
+        btnGenero.pack(side="left", fill="both", expand=True, padx=5, pady=(0, 5))
+
+        btnFechaRegistro = tk.Button(marco_botones, text="Fecha de Registro", width=15, command=self.mostrar_seccion_fecha_registro)
+        btnFechaRegistro.pack(side="left", fill="both", expand=True, padx=5, pady=(0, 5))
+
+        # Centrar los botones en la parte superior del contenedor
+        marco_botones.pack(side="top", fill="x", anchor="n")
+
+
+#paciente por fecha de registro____________
+    def mostrar_seccion_fecha_registro(self):
+        # Limpiar el contenedor
+        for widget in self.contenedor_seccion.winfo_children():
+            widget.destroy()
+
+        # Crear un marco para contener la sección de búsqueda por fecha de registro
+        marco_fecha_registro = tk.Frame(self.contenedor_seccion)
+        marco_fecha_registro.grid(row=0, column=0, sticky="nsew")  # Hacemos que el marco se expanda en todas las direcciones
+
+        # Etiqueta y Entry para la fecha de inicio
+        lbl_desde = tk.Label(marco_fecha_registro, text="Desde:")
+        lbl_desde.grid(row=0, column=0, padx=5, pady=5)
+
+        self.entry_desde = tk.Entry(marco_fecha_registro)
+        self.entry_desde.grid(row=0, column=1, padx=5, pady=5)
+
+        # Etiqueta y Entry para la fecha de fin
+        lbl_hasta = tk.Label(marco_fecha_registro, text="Hasta:")
+        lbl_hasta.grid(row=0, column=2, padx=5, pady=5)
+
+        self.entry_hasta = tk.Entry(marco_fecha_registro)
+        self.entry_hasta.grid(row=0, column=3, padx=5, pady=5)
+
+        # Botón para buscar pacientes por fecha de registro
+        btn_buscar = tk.Button(marco_fecha_registro, text="Buscar", command=self.buscar_pacientes_por_fecha_registro)
+        btn_buscar.grid(row=0, column=4, padx=5, pady=5)
+
+        # Botón para generar el reporte en PDF
+        btn_generar_reporte = tk.Button(marco_fecha_registro, text="Generar Reporte", command=self.generar_reporte_fecha_registro)
+        btn_generar_reporte.grid(row=1, column=0, columnspan=5, padx=10, pady=10)
+
+        # Marco para la tabla y las barras de desplazamiento
+        marco_tabla = tk.Frame(marco_fecha_registro)
+        marco_tabla.grid(row=2, column=0, columnspan=5, padx=10, pady=10, sticky="nsew")  # Hacemos que el marco se expanda
+
+        # Tabla de pacientes con encabezados
+        self.tabla_pacientes_fecha_registro = ttk.Treeview(marco_tabla, columns=('Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro'), show='headings')
+        self.tabla_pacientes_fecha_registro.grid(row=0, column=0, sticky="nsew")
+
+        # Agregar encabezados
+        for col in ('Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro'):
+            self.tabla_pacientes_fecha_registro.heading(col, text=col)
+
+        # Agregar barras de desplazamiento
+        scroll_vertical = ttk.Scrollbar(marco_tabla, orient="vertical", command=self.tabla_pacientes_fecha_registro.yview)
+        scroll_vertical.grid(row=0, column=1, sticky="ns")
+
+        scroll_horizontal = ttk.Scrollbar(marco_tabla, orient="horizontal", command=self.tabla_pacientes_fecha_registro.xview)
+        scroll_horizontal.grid(row=1, column=0, sticky="ew")
+
+        # Configurar la tabla
+        self.tabla_pacientes_fecha_registro.configure(yscrollcommand=scroll_vertical.set, xscrollcommand=scroll_horizontal.set)
+
+        # Ajustar el tamaño del contenedor principal
+        self.contenedor_seccion.columnconfigure(0, weight=1)
+        self.contenedor_seccion.rowconfigure(0, weight=1)
+
+        # Ajustar el tamaño de las columnas en el marco de fecha de registro
+        marco_fecha_registro.columnconfigure(0, weight=1)
+        marco_fecha_registro.columnconfigure(1, weight=1)
+        marco_fecha_registro.columnconfigure(2, weight=1)
+        marco_fecha_registro.columnconfigure(3, weight=1)
+        marco_fecha_registro.columnconfigure(4, weight=1)
+
+
+    def buscar_pacientes_por_fecha_registro(self):
+        # Limpiar tabla
+        for item in self.tabla_pacientes_fecha_registro.get_children():
+            self.tabla_pacientes_fecha_registro.delete(item)
+
+        # Obtener fechas de inicio y fin
+        desde = self.entry_desde.get()
+        hasta = self.entry_hasta.get()
+
+        # Consulta SQL para obtener pacientes registrados entre las fechas especificadas
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE fechaRegistro BETWEEN '{desde}' AND '{hasta}'"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        # Insertar datos en la tabla
+        for paciente in pacientes:
+            self.tabla_pacientes_fecha_registro.insert('', 'end', values=paciente)
+
+
+    def generar_reporte_fecha_registro(self):
+        # Obtener fechas de inicio y fin
+        desde = self.entry_desde.get()
+        hasta = self.entry_hasta.get()
+
+        # Consulta SQL para obtener los pacientes registrados entre las fechas especificadas
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE fechaRegistro BETWEEN '{desde}' AND '{hasta}'"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        data = [['Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro']]
+        for paciente in pacientes:
+            data.append(list(paciente))
+
+        # Obtener el estilo del encabezado
+        estilo_encabezado = getSampleStyleSheet()["Heading1"]
+
+        # Crear el documento PDF
+        pdf_file = "Reporte_Pacientes_Fecha_{}_{}.pdf".format(desde, hasta)
+        pdf = SimpleDocTemplate(pdf_file, pagesize=letter)
+
+        # Contenido del PDF
+        contenido = []
+
+        # Agregar encabezado al contenido del PDF
+        encabezado = f"UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO\n\nUNIDAD DE BIENESTAR CENTRO MÉDICO\n\n Reporte de Pacientes registrados desde {desde} hasta {hasta}\n"
+        contenido.append(Paragraph(encabezado, estilo_encabezado))
+        contenido.append(Spacer(1, 20))  # Agregar un espacio en blanco
+
+        # Agregar tabla al contenido del PDF
+        tabla = Table(data)
+        style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), '#77D9D3'),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), '#FFFFFF'),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 1), (-1, -1), '#C1E8F4'),
+                            ('GRID', (0, 0), (-1, -1), 1, '#000000')])
+        tabla.setStyle(style)
+        contenido.append(tabla)
+
+        # Construir el PDF
+        pdf.build(contenido)
+        subprocess.Popen([pdf_file], shell=True)
+
+#fin fecha de registro-------------------------------------
+
+#paciente por genero_______________
+    def mostrar_seccion_genero(self):
+        # Limpiar el contenedor
+        for widget in self.contenedor_seccion.winfo_children():
+            widget.destroy()
+
+        # Crear un marco para contener la sección de búsqueda por género
+        marco_genero = tk.Frame(self.contenedor_seccion)
+        marco_genero.grid(row=0, column=0, sticky="nsew")  # Hacemos que el marco se expanda en todas las direcciones
+
+        # Etiqueta para la selección de género
+        lbl_genero = tk.Label(marco_genero, text="Seleccione un género:")
+        lbl_genero.grid(row=0, column=0, padx=5, pady=5, sticky="e")
+
+        # Lista desplegable para seleccionar el género
+        self.lista_generos = ttk.Combobox(marco_genero, state="readonly")
+        self.lista_generos.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        # Obtener los géneros disponibles y cargarlos en la lista desplegable
+        generos = self.obtener_generos()
+        self.lista_generos['values'] = generos
+
+        # Botón para buscar pacientes por género
+        btn_buscar = tk.Button(marco_genero, text="Buscar", command=self.buscar_pacientes_por_genero)
+        btn_buscar.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+
+        # Botón para generar el reporte en PDF
+        btn_generar_reporte = tk.Button(marco_genero, text="Generar Reporte", command=self.generar_reporte_genero)
+        btn_generar_reporte.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+
+        # Marco para la tabla y las barras de desplazamiento
+        marco_tabla = tk.Frame(marco_genero)
+        marco_tabla.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")  # Hacemos que el marco se expanda
+
+        # Tabla de pacientes con encabezados
+        self.tabla_pacientes_genero = ttk.Treeview(marco_tabla, columns=('Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro'), show='headings')
+        self.tabla_pacientes_genero.grid(row=0, column=0, sticky="nsew")
+
+        # Agregar encabezados
+        for col in ('Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro'):
+            self.tabla_pacientes_genero.heading(col, text=col)
+
+        # Agregar barras de desplazamiento
+        scroll_vertical = ttk.Scrollbar(marco_tabla, orient="vertical", command=self.tabla_pacientes_genero.yview)
+        scroll_vertical.grid(row=0, column=1, sticky="ns")
+
+        scroll_horizontal = ttk.Scrollbar(marco_tabla, orient="horizontal", command=self.tabla_pacientes_genero.xview)
+        scroll_horizontal.grid(row=1, column=0, sticky="ew")
+
+        # Configurar la tabla
+        self.tabla_pacientes_genero.configure(yscrollcommand=scroll_vertical.set, xscrollcommand=scroll_horizontal.set)
+
+        # Ajustar el tamaño del contenedor principal
+        self.contenedor_seccion.columnconfigure(0, weight=1)
+        self.contenedor_seccion.rowconfigure(0, weight=1)
+
+        # Ajustar el tamaño de las columnas en el marco del género
+        marco_genero.columnconfigure(0, weight=1)
+        marco_genero.columnconfigure(1, weight=1)
+        marco_genero.columnconfigure(2, weight=1)
     
+    def obtener_generos(self):
+        # Consulta SQL para obtener todas las carreras distintas
+        sql = "SELECT DISTINCT genero FROM Persona"
+        self.conexion_db.cursor.execute(sql)
+        generos = self.conexion_db.cursor.fetchall()
+        generos = [genero[0] for genero in generos]
+        return generos
+    
+    def buscar_pacientes_por_genero(self):
+        # Limpiar tabla
+        for item in self.tabla_pacientes_genero.get_children():
+            self.tabla_pacientes_genero.delete(item)
+
+        # Obtener género seleccionado
+        genero = self.lista_generos.get()
+
+        # Consulta SQL para obtener pacientes del género seleccionado
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE genero = '{genero}'"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        # Insertar datos en la tabla
+        for paciente in pacientes:
+            self.tabla_pacientes_genero.insert('', 'end', values=paciente)
+
+
+    def generar_reporte_genero(self):
+        # Obtener el género seleccionado
+        genero = self.lista_generos.get()
+
+        # Consulta SQL para obtener los pacientes del género seleccionado
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE genero = '{genero}'"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        data = [['Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro']]
+        for paciente in pacientes:
+            data.append(list(paciente))
+
+        # Obtener el estilo del encabezado
+        estilo_encabezado = getSampleStyleSheet()["Heading1"]
+
+        # Crear el documento PDF
+        pdf_file = "Reporte_Pacientes_Genero_{}_{}.pdf".format(genero, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        pdf = SimpleDocTemplate(pdf_file, pagesize=letter)
+
+        # Contenido del PDF
+        contenido = []
+
+        # Agregar encabezado al contenido del PDF
+        encabezado = "UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO\n\nUNIDAD DE BIENESTAR CENTRO MÉDICO\n\nReporte de Pacientes de Género: {}\n".format(genero)
+        contenido.append(Paragraph(encabezado, estilo_encabezado))
+        contenido.append(Spacer(1, 20))  # Agregar un espacio en blanco
+
+        # Agregar tabla al contenido del PDF
+        tabla = Table(data)
+        style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), '#77D9D3'),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), '#FFFFFF'),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 1), (-1, -1), '#C1E8F4'),
+                            ('GRID', (0, 0), (-1, -1), 1, '#000000')])
+        tabla.setStyle(style)
+        contenido.append(tabla)
+
+        # Construir el PDF
+        pdf.build(contenido)
+        subprocess.Popen([pdf_file], shell=True)
+
+
+#fin paciente por genero-------------------------------------
+
+
+
+#paciente por carrera----------------------------------------
+    def mostrar_seccion_carrera(self):
+        # Limpiar el contenedor
+        for widget in self.contenedor_seccion.winfo_children():
+            widget.destroy()
+
+        # Crear un marco para contener la sección de búsqueda por carrera
+        marco_carrera = tk.Frame(self.contenedor_seccion)
+        marco_carrera.grid(row=0, column=0, sticky="nsew")  # Hacemos que el marco se expanda en todas las direcciones
+
+        # Etiqueta para la selección de carrera
+        lbl_carrera = tk.Label(marco_carrera, text="Seleccione una carrera:")
+        lbl_carrera.grid(row=0, column=0, padx=5, pady=5, sticky="e")
+
+        # Lista desplegable para seleccionar la carrera
+        self.lista_carreras = ttk.Combobox(marco_carrera, state="readonly")
+        self.lista_carreras.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        # Obtener las carreras disponibles y cargarlas en la lista desplegable
+        carreras = self.obtener_carreras()
+        self.lista_carreras['values'] = carreras
+
+        # Botón para buscar pacientes por carrera
+        btn_buscar = tk.Button(marco_carrera, text="Buscar", command=self.buscar_pacientes_por_carrera)
+        btn_buscar.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+
+        # Botón para generar el reporte en PDF
+        btn_generar_reporte = tk.Button(marco_carrera, text="Generar Reporte", command=self.generar_reporte_carrera)
+        btn_generar_reporte.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+
+        # Marco para la tabla y las barras de desplazamiento
+        marco_tabla = tk.Frame(marco_carrera)
+        marco_tabla.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")  # Hacemos que el marco se expanda
+
+        # Tabla de pacientes con encabezados
+        self.tabla_pacientes_carrera = ttk.Treeview(marco_tabla, columns=('Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro'), show='headings')
+        self.tabla_pacientes_carrera.grid(row=0, column=0, sticky="nsew")
+
+        # Agregar encabezados
+        for col in ('Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro'):
+            self.tabla_pacientes_carrera.heading(col, text=col)
+
+        # Agregar barras de desplazamiento
+        scroll_vertical = ttk.Scrollbar(marco_tabla, orient="vertical", command=self.tabla_pacientes_carrera.yview)
+        scroll_vertical.grid(row=0, column=1, sticky="ns")
+
+        scroll_horizontal = ttk.Scrollbar(marco_tabla, orient="horizontal", command=self.tabla_pacientes_carrera.xview)
+        scroll_horizontal.grid(row=1, column=0, sticky="ew")
+
+        # Configurar la tabla
+        self.tabla_pacientes_carrera.configure(yscrollcommand=scroll_vertical.set, xscrollcommand=scroll_horizontal.set)
+
+        # Ajustar el tamaño del contenedor principal
+        self.contenedor_seccion.columnconfigure(0, weight=1)
+        self.contenedor_seccion.rowconfigure(0, weight=1)
+
+        # Ajustar el tamaño de las columnas en el marco de la carrera
+        marco_carrera.columnconfigure(0, weight=1)
+        marco_carrera.columnconfigure(1, weight=1)
+        marco_carrera.columnconfigure(2, weight=1)
+
+
+    def obtener_carreras(self):
+        # Consulta SQL para obtener todas las carreras distintas
+        sql = "SELECT DISTINCT carrera FROM Persona"
+        self.conexion_db.cursor.execute(sql)
+        carreras = self.conexion_db.cursor.fetchall()
+        carreras = [carrera[0] for carrera in carreras]
+        return carreras
+
+    def buscar_pacientes_por_carrera(self):
+        # Limpiar tabla
+        for item in self.tabla_pacientes_carrera.get_children():
+            self.tabla_pacientes_carrera.delete(item)
+
+        # Obtener la carrera seleccionada
+        carrera = self.lista_carreras.get()
+
+        # Consulta SQL para obtener pacientes de la carrera seleccionada
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE carrera = '{carrera}'"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        # Insertar datos en la tabla
+        for paciente in pacientes:
+            self.tabla_pacientes_carrera.insert('', 'end', values=paciente)
+    
+    
+    def generar_reporte_carrera(self):
+        # Obtener la carrera seleccionada
+        carrera = self.lista_carreras.get()
+
+        # Consulta SQL para obtener los pacientes de la carrera seleccionada
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE carrera = '{carrera}'"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        data = [['Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro']]
+        for paciente in pacientes:
+            data.append(list(paciente))
+
+        # Obtener el estilo del encabezado
+        estilo_encabezado = getSampleStyleSheet()["Heading1"]
+
+        # Crear el documento PDF
+        pdf_file = "Reporte_Pacientes_Carrera_{}_{}.pdf".format(carrera, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        pdf = SimpleDocTemplate(pdf_file, pagesize=letter)
+
+        # Contenido del PDF
+        contenido = []
+
+        # Agregar encabezado al contenido del PDF
+        encabezado = "UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO\n\nUNIDAD DE BIENESTAR CENTRO MÉDICO\n\nReporte de Pacientes de la Carrera: {}\n".format(carrera)
+        contenido.append(Paragraph(encabezado, estilo_encabezado))
+        contenido.append(Spacer(1, 20))  # Agregar un espacio en blanco
+
+        # Agregar tabla al contenido del PDF
+        tabla = Table(data)
+        style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), '#77D9D3'),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), '#FFFFFF'),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 1), (-1, -1), '#C1E8F4'),
+                            ('GRID', (0, 0), (-1, -1), 1, '#000000')])
+        tabla.setStyle(style)
+        contenido.append(tabla)
+
+        # Construir el PDF
+        pdf.build(contenido)
+        subprocess.Popen([pdf_file], shell=True)
+
+
+
+#por paciente por edad--------------------------------------------------------
+    def mostrar_seccion_edad(self):
+        # Limpiar el contenedor
+        for widget in self.contenedor_seccion.winfo_children():
+            widget.destroy()
+
+        # Crear un marco para contener la sección de búsqueda por edad
+        marco_edad = tk.Frame(self.contenedor_seccion)
+        marco_edad.grid(row=0, column=0, sticky="nsew")  # Hacemos que el marco se expanda en todas las direcciones
+
+        # Etiquetas y Entry para el rango de edad
+        lbl_desde = tk.Label(marco_edad, text="De:")
+        lbl_desde.grid(row=0, column=0, padx=5, pady=5)
+
+        self.entry_desde = tk.Entry(marco_edad)
+        self.entry_desde.grid(row=0, column=1, padx=5, pady=5)
+
+        lbl_hasta = tk.Label(marco_edad, text="Hasta:")
+        lbl_hasta.grid(row=0, column=2, padx=5, pady=5)
+
+        self.entry_hasta = tk.Entry(marco_edad)
+        self.entry_hasta.grid(row=0, column=3, padx=5, pady=5)
+
+        # Botón para buscar pacientes por rango de edad
+        btn_buscar = tk.Button(marco_edad, text="Buscar", command=self.buscar_pacientes)
+        btn_buscar.grid(row=0, column=4, padx=5, pady=5)
+
+        # Marco para la tabla y las barras de desplazamiento
+        marco_tabla = tk.Frame(marco_edad)
+        marco_tabla.grid(row=1, column=0, columnspan=5, padx=10, pady=10, sticky="nsew")  # Hacemos que el marco se expanda
+
+        # Tabla de pacientes con encabezados
+        self.tabla_pacientes = ttk.Treeview(marco_tabla, columns=('Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro'), show='headings')
+        self.tabla_pacientes.grid(row=0, column=0, sticky="nsew")
+
+        # Agregar encabezados
+        for col in ('Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro'):
+            self.tabla_pacientes.heading(col, text=col)
+
+        # Agregar barras de desplazamiento
+        scroll_vertical = ttk.Scrollbar(marco_tabla, orient="vertical", command=self.tabla_pacientes.yview)
+        scroll_vertical.grid(row=0, column=1, sticky="ns")
+
+        scroll_horizontal = ttk.Scrollbar(marco_tabla, orient="horizontal", command=self.tabla_pacientes.xview)
+        scroll_horizontal.grid(row=1, column=0, sticky="ew")
+
+        # Configurar la tabla
+        self.tabla_pacientes.configure(yscrollcommand=scroll_vertical.set, xscrollcommand=scroll_horizontal.set)
+
+        # Botón para generar el reporte en PDF
+        btn_generar_reporte = tk.Button(marco_edad, text="Generar Reporte", command=self.generar_reporte)
+        btn_generar_reporte.grid(row=2, column=0, columnspan=5, padx=10, pady=10)
+
+        # Ajustar el tamaño de las columnas y filas del marco
+        marco_edad.columnconfigure(0, weight=1)  # Ajustamos la primera columna
+        marco_edad.rowconfigure(1, weight=1)     # Ajustamos la segunda fila
+
+        # Ajustar el tamaño del contenedor principal
+        self.contenedor_seccion.columnconfigure(0, weight=1)
+        self.contenedor_seccion.rowconfigure(0, weight=1)
+
+
+
+
+    def buscar_pacientes(self):
+        # Limpiar tabla
+        for item in self.tabla_pacientes.get_children():
+            self.tabla_pacientes.delete(item)
+
+        # Obtener rango de edad
+        desde = int(self.entry_desde.get())
+        hasta = int(self.entry_hasta.get())
+
+        # Consulta SQL para obtener pacientes dentro del rango de edad
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE edad BETWEEN {desde} AND {hasta}"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        # Insertar datos en la tabla
+        for paciente in pacientes:
+            self.tabla_pacientes.insert('', 'end', values=paciente)
+
+    def generar_reporte(self):
+        # Obtener el rango de edad especificado
+        desde = int(self.entry_desde.get())
+        hasta = int(self.entry_hasta.get())
+
+        # Consulta SQL para obtener los pacientes dentro del rango de edad especificado
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE edad BETWEEN {desde} AND {hasta}"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        data = [['Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro']]
+        for paciente in pacientes:
+            data.append(list(paciente))
+
+        # Obtener el estilo del encabezado
+        estilo_encabezado = getSampleStyleSheet()["Heading1"]
+
+        # Crear el documento PDF
+        pdf_file = "Reporte_Pacientes_{}.pdf".format(datetime.now()).replace(" ","-").replace(":",".")
+        pdf = SimpleDocTemplate(pdf_file, pagesize=letter)
+
+        # Contenido del PDF
+        contenido = []
+
+        # Agregar encabezado al contenido del PDF
+        encabezado = "UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO\n\nUNIDAD DE BIENESTAR CENTRO MÉDICO\n\nREPORTE DE PACIENTES POR EDAD\n\nDE: {}\n\nHASTA: {}".format(desde, hasta)
+        contenido.append(Paragraph(encabezado, estilo_encabezado))
+        contenido.append(Spacer(1, 20))  # Agregar un espacio en blanco
+
+        # Agregar tabla al contenido del PDF
+        tabla = Table(data)
+        style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), '#77D9D3'),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), '#FFFFFF'),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 1), (-1, -1), '#C1E8F4'),
+                            ('GRID', (0, 0), (-1, -1), 1, '#000000')])
+        tabla.setStyle(style)
+        contenido.append(tabla)
+
+        # Construir el PDF
+        pdf.build(contenido)
+        subprocess.Popen([pdf_file], shell=True)
+
+
+
+    def generar_reporte(self):
+        # Obtener el rango de edad especificado
+        desde = int(self.entry_desde.get())
+        hasta = int(self.entry_hasta.get())
+
+        # Consulta SQL para obtener los pacientes dentro del rango de edad especificado
+        sql = f"SELECT cedula, nombres, apellidos, edad, carrera, genero, fechaRegistro FROM Persona WHERE edad BETWEEN {desde} AND {hasta}"
+        self.conexion_db.cursor.execute(sql)
+        pacientes = self.conexion_db.cursor.fetchall()
+
+        data = [['Cédula', 'Nombres', 'Apellidos', 'Edad', 'Carrera', 'Género', 'Fecha de Registro']]
+        for paciente in pacientes:
+            data.append(list(paciente))
+
+        # Obtener el estilo del encabezado
+        estilo_encabezado = getSampleStyleSheet()["Heading1"]
+
+        # Crear el documento PDF
+        pdf_file = "Reporte_Pacientes_{}.pdf".format(datetime.now()).replace(" ","-").replace(":",".")
+        pdf = SimpleDocTemplate(pdf_file, pagesize=letter)
+
+        # Contenido del PDF
+        contenido = []
+
+        # Agregar encabezado al contenido del PDF
+        encabezado = "UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO\n\n   UNIDAD DE BIENESTAR CENTRO MÉDICO\n\nREPORTE DE PACIENTES POR EDAD \n\n DE: {} \n\n HASTA: {}".format(desde, hasta)
+        contenido.append(Paragraph(encabezado, estilo_encabezado))  
+
+        # Agregar tabla al contenido del PDF
+        tabla = Table(data)
+        style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), '#77D9D3'),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), '#FFFFFF'),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 1), (-1, -1), '#C1E8F4'),
+                            ('GRID', (0, 0), (-1, -1), 1, '#000000')])
+        tabla.setStyle(style)
+        contenido.append(tabla)
+
+        # Construir el PDF
+        pdf.build(contenido)
+        subprocess.Popen([pdf_file], shell=True)
+
+
+    def mostrar_seccion_recetas(self):
+        # Limpiar el contenedor
+        for widget in self.contenedor_seccion.winfo_children():
+            widget.destroy()
+
+            
+#trabajando en reportes--------------------------------    
+    def guardarPaciente(self):
+        # Crear un objeto Persona con los datos ingresados en los campos de entrada
+        persona = Persona(
+            self.svFecha.get(), self.svNombre.get(), self.svApellidos.get(), self.svFechaNacimiento.get(), self.svCedula.get(), self.svEdad.get(), 
+            self.svEstadoCivil.get(), self.svDomicilio.get(), self.svTelefono.get(), self.svApp.get(), self.svAPF.get(), self.svAGO.get(), 
+            self.svAlergia.get(), self.svCorreo.get(), self.svCarrera.get(), self.svGenero.get(), self.svSemestre.get()
+        )
+
+        # Siempre agregamos un nuevo paciente
+        guardarDatosPaciente(persona)
+        self.tablaPaciente()
+        self.deshabilitar()
+
+
     def buscarCondicion(self):
         if len(self.svBuscarDni.get()) > 0 or len(self.svBuscarApellido.get()) > 0 or len(self.svBuscarCarrera.get()) > 0:
             where = "WHERE 1=1"
@@ -362,20 +1041,6 @@ class Frame(tk.Frame):
         self.svBuscarCarrera.set('')
         self.tablaPaciente()
 
-    def guardarPaciente(self):
-        persona = Persona(
-            self.svFecha.get(), self.svNombre.get(), self.svApellidos.get(), self.svFechaNacimiento.get(), self.svCedula.get(), self.svEdad.get(), 
-            self.svEstadoCivil.get(), self.svDomicilio.get(), self.svTelefono.get(), self.svApp.get(), self.svAPF.get(), self.svAGO.get(), 
-            self.svAlergia.get(), self.svCorreo.get(), self.svCarrera.get(), self.svGenero.get(),self.svSemestre.get()
-        )
-       
-        if self.idPersona ==None:
-            guardarDatosPaciente(persona)
-        else:
-            editarDatoPaciente(persona, self.idPersona)
-          
-        self.deshabilitar()
-        self.tablaPaciente()
 
     def habilitar(self):
         self.svCarrera.set('')
@@ -642,12 +1307,12 @@ class Frame(tk.Frame):
         self.lblSignosVitales.grid(row=0, column=0, columnspan=4, pady=5)
 
         #PA
-        self.lblPA = tk.Label(self.frameDatosHistoria, text='PA (sistolica/diastolica):', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+        self.lblPA = tk.Label(self.frameDatosHistoria, text='PA (sistolica/diastolica):', width=20, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
         self.lblPA.grid(row=1, column=0, pady=3, padx=0, sticky='w', columnspan=2)
         
         self.svPA = tk.StringVar()
         self.entryPA = tk.Entry(self.frameDatosHistoria, width=30, textvariable=self.svPA)
-        self.entryPA.config(width=30, font=('Nexa',8,'bold'))
+        self.entryPA.config(width=20, font=('Nexa',8,'bold'))
         self.entryPA.grid(row=1, column=0, pady=3,  sticky='e')
 
         #FC
@@ -656,7 +1321,7 @@ class Frame(tk.Frame):
         
         self.svFC = tk.StringVar()
         self.entryFC = tk.Entry(self.frameDatosHistoria, width=30, textvariable=self.svFC)
-        self.entryFC.config(width=30, font=('Nexa',8,'bold'))
+        self.entryFC.config(width=20, font=('Nexa',8,'bold'))
         self.entryFC.grid(row=1, column=1, pady=3, sticky='e')
 
         #PESO
@@ -665,7 +1330,7 @@ class Frame(tk.Frame):
         
         self.svPESO = tk.StringVar()
         self.entryPeso = tk.Entry(self.frameDatosHistoria, width=30, textvariable=self.svPESO)
-        self.entryPeso.config(width=30, font=('Nexa',8,'bold'))
+        self.entryPeso.config(width=20, font=('Nexa',8,'bold'))
         self.entryPeso.grid(row=2, column=0, pady=3, sticky='e')
 
         #TALLA
@@ -674,7 +1339,7 @@ class Frame(tk.Frame):
 
         self.svTalla = tk.StringVar()
         self.entryTalla = tk.Entry(self.frameDatosHistoria, width=30, textvariable=self.svTalla)
-        self.entryTalla.config(width=30, font=('Nexa',8,'bold'))
+        self.entryTalla.config(width=20, font=('Nexa',8,'bold'))
         self.entryTalla.grid(row=2, column=1, pady=3, sticky='e')
 
         #IMC
@@ -683,7 +1348,7 @@ class Frame(tk.Frame):
 
         self.svICM = tk.StringVar()
         self.entryIMC = tk.Entry(self.frameDatosHistoria, width=30, textvariable=self.svICM)
-        self.entryIMC.config(width=30, font=('Nexa',8,'bold'))
+        self.entryIMC.config(width=20, font=('Nexa',8,'bold'))
         self.entryIMC.grid(row=3, column=0, pady=3, sticky='e')
 
       # Motivo de Consulta
@@ -744,6 +1409,8 @@ class Frame(tk.Frame):
 
 #rectaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     def abrirVentanaReceta(self):
+        
+
         self.topRecetas.destroy()
         self.ventana_receta = tk.Toplevel()
         self.ventana_receta.title("Receta Médica")
@@ -1247,45 +1914,45 @@ class Frame(tk.Frame):
             self.lblSignosVitalesEditar.grid(row=0, column=0, columnspan=4, pady=5)
 
             #PA
-            self.lblPAEditar = tk.Label(self.frameEditarHistoria, text='PA:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+            self.lblPAEditar = tk.Label(self.frameEditarHistoria, text='PA (sistolica/diastolica):', width=20, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblPAEditar.grid(row=1, column=0, pady=3, padx=0, sticky='w', columnspan=2)
 
             self.svPAEditar = tk.StringVar()
             self.entryPAEditar = tk.Entry(self.frameEditarHistoria, width=30, textvariable=self.svPAEditar)
-            self.entryPAEditar.config(width=30, font=('Nexa',8,'bold'))
+            self.entryPAEditar.config(width=20, font=('Nexa',8,'bold'))
             self.entryPAEditar.grid(row=1, column=0, pady=3,  sticky='e')
 
             #FC
-            self.lblFCEditar = tk.Label(self.frameEditarHistoria, text='FC:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+            self.lblFCEditar = tk.Label(self.frameEditarHistoria, text='FC (lpm):', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblFCEditar.grid(row=1, column=1, pady=3, sticky='w', columnspan=2)
             
             self.svFCEditar = tk.StringVar()
             self.entryFCEditar = tk.Entry(self.frameEditarHistoria, width=30, textvariable=self.svFCEditar)
-            self.entryFCEditar.config(width=30, font=('Nexa',8,'bold'))
+            self.entryFCEditar.config(width=20, font=('Nexa',8,'bold'))
             self.entryFCEditar.grid(row=1, column=1, pady=3, sticky='e')
 
             #PESO
-            self.lblPesoEditar = tk.Label(self.frameEditarHistoria, text='PESO:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+            self.lblPesoEditar = tk.Label(self.frameEditarHistoria, text='PESO (kg):', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblPesoEditar.grid(row=2, column=0, pady=2, sticky='w', columnspan=2)
             
             self.svPESOEditar = tk.StringVar()
             self.entryPesoEditar = tk.Entry(self.frameEditarHistoria, width=30, textvariable=self.svPESOEditar)
-            self.entryPesoEditar.config(width=30, font=('Nexa',8,'bold'))
+            self.entryPesoEditar.config(width=20, font=('Nexa',8,'bold'))
             self.entryPesoEditar.grid(row=2, column=0, pady=3, sticky='e')
 
              #TALLA
-            self.lblTallaEditar = tk.Label(self.frameEditarHistoria, text='TALLA:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
+            self.lblTallaEditar = tk.Label(self.frameEditarHistoria, text='TALLA (cm):', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblTallaEditar.grid(row=2, column=1, pady=3, sticky='w', columnspan=2)
             self.svTallaEditar = tk.StringVar()
             self.entryTallaEditar = tk.Entry(self.frameEditarHistoria, width=30, textvariable=self.svTallaEditar)
-            self.entryTallaEditar.config(width=30, font=('Nexa',8,'bold'))
+            self.entryTallaEditar.config(width=20, font=('Nexa',8,'bold'))
             self.entryTallaEditar.grid(row=2, column=1, pady=3, sticky='e')    
             #IMC
             self.lblIMCEditar = tk.Label(self.frameEditarHistoria, text='IMC:', width=15, font=('ARIAL', 12, 'bold'), bg='#CDD8FF')
             self.lblIMCEditar.grid(row=3, column=0, pady=3, sticky='w', columnspan=2)
             self.svICMEditar = tk.StringVar()
             self.entryIMCEditar = tk.Entry(self.frameEditarHistoria, width=30, textvariable=self.svICMEditar)
-            self.entryIMCEditar.config(width=30, font=('Nexa',8,'bold'))
+            self.entryIMCEditar.config(width=20, font=('Nexa',8,'bold'))
             self.entryIMCEditar.grid(row=3, column=0, pady=3, sticky='e')
              # Motivo de Consulta
             self.lblMotivoConsultaEditar = tk.Label(self.frameEditarHistoria, text='MOTIVO DE CONSULTA:', font=('ARIAL', 12, 'bold'), bg='#CDD8FF')

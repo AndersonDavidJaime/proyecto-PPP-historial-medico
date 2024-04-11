@@ -28,10 +28,12 @@ def guardarDatosPaciente(persona):
         title = 'Registrar Paciente'
         mensaje = 'Paciente Registrado Exitosamente'
         messagebox.showinfo(title, mensaje)
+    
     except sqlite3.IntegrityError:
         title = 'Registrar paciente'
         mensaje = 'Error al registrar paciente: violación de la integridad de datos'
         messagebox.showerror(title, mensaje)
+    
     except Exception as e:
         title = 'Registrar paciente'
         mensaje = f'Error al registrar paciente: {str(e)}'

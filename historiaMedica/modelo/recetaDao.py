@@ -20,7 +20,7 @@ def ultimoId(idHistoriaMedica):
 def listarReceta(idHistoriaMedica):
     conexion = ConexionDB()
     listaReceta = []
-    sql = f'SELECT idReceta, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche FROM Receta WHERE idHistoriaMedica = {idHistoriaMedica}'
+    sql = f'SELECT idReceta, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion FROM Receta WHERE idHistoriaMedica = {idHistoriaMedica}'
 
     try:
         conexion.cursor.execute(sql)
@@ -32,10 +32,10 @@ def listarReceta(idHistoriaMedica):
         messagebox.showerror(title, mensaje)
     return listaReceta
 
-def guardarReceta(idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche):
+def guardarReceta(idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion):
     conexion = ConexionDB()
-    sql = f"""INSERT INTO Receta (idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion, manana, mediodia, tarde, noche) 
-            VALUES ({idHistoriaMedica}, '{fechaReceta}', '{especialidadServicio}', '{prescriptorNombre}', '{viasAdministracion}', '{dosis}', '{frecuencia}', '{duracion}', '{manana}', '{mediodia}', '{tarde}', '{noche}')"""
+    sql = f"""INSERT INTO Receta (idHistoriaMedica, fechaReceta, especialidadServicio, prescriptorNombre, viasAdministracion, dosis, frecuencia, duracion) 
+            VALUES ({idHistoriaMedica}, '{fechaReceta}', '{especialidadServicio}', '{prescriptorNombre}', '{viasAdministracion}', '{dosis}', '{frecuencia}', '{duracion}')"""
     print(sql)
     try:
         conexion.cursor.execute(sql)
